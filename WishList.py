@@ -1,0 +1,224 @@
+#importar librerias necesarias para el sistema
+from pathlib import Path
+import pandas as pd
+import streamlit as st
+
+from datos_excel import (
+  COLUMNAS_PERFIL, ESTADOS, FRECUENCIAS, TIPOS,
+  cargar_datos, guardar_excel,
+)
+from datos_demo import hojas_demo
+from graficos import grafico_503020, grafico_plan_de_compras, grafico_ranking
+from finanzas import (
+  analizar_wishlist, deseos_disponibles, fondo_completo, margen_necesidades,
+  meses_fondo_cubiertos, perfil_desde_hoja, presupuesto_503020,
+)
+
+ICONOS_SEMAFORO = {
+  "Comprar ya": "🟢 Comprar ya",
+  "Esperar": "🟡 Esperar",
+  "No conviene": "🔴 No conviene",
+  "Por cotizar": "⚪ Por cotizar",
+  "Clasificar": "⚪ Clasificar",
+  "Falta perfil": "⚪ Falta perfil",
+  "Comprado": "✅ Comprado",
+}
+COLUMNAS_ANALISIS = [
+  "Articulo", "Tipo", "Costo Estimado", "Puntaje", "% del Ingreso",
+  "Meses de Espera", "Fecha Estimada", "Semaforo", "Motivo",
+]
+
+#ruta del archivo excel junto a este script (no depende de la carpeta desde donde se lance streamlit)
+archivo = Path(__file__).parent / "TablaWishList.xlsx"
+
+# Configuración de la página
+st.set_page_config(
+    page_title="WishList", page_icon="📊", layout="centered"
+)
+
+st.title("📝 WishList")
+st.markdown("Sistema para organizar tus compras y prioridades")
+
+
+def guardar(hojas_a_guardar):
+  """Guarda todas las hojas; devuelve True si salio bien (el Excel abierto da PermissionError)."""
+  if usar_demo:
+    st.warning("Modo ejemplo: no se guarda nada en tu Excel. Apaga el modo ejemplo para guardar de verdad.")
+    return False
+  try:
+    guardar_excel(hojas_a_guardar, archivo)
+  except PermissionError:
+    st.error("El Excel está abierto o OneDrive lo bloquea. Ciérralo y vuelve a guardar.")
+    return False
+  return True
+
+
+def valor_inicial(fila, columna):
+  """Valor del perfil guardado para precargar el formulario (0.0 si no hay o esta vacio)."""
+  if fila is None or pd.isna(fila[columna]):
+    return 0.0
+  return float(fila[columna])
+
+
+usar_demo = st.sidebar.toggle(
+  "Ver con datos de ejemplo",
+  help="Muestra el sistema con datos inventados. No lee ni modifica tu Excel.",
+)
+if usar_demo:
+  st.sidebar.info("Modo ejemplo activo: lo que ves no son tus datos y no se guarda nada.")
+
+hojas = hojas_demo() if usar_demo else cargar_datos(archivo)
+df = hojas["WishList"]
+perfil = hojas["Perfil"]
+
+tab_articulos, tab_perfil, tab_analisis, tab_dashboard = st.tabs(
+  ["Artículos", "Perfil financiero", "Análisis", "Dashboard"]
+)
+
+with tab_articulos:
+  # Formulario de entrada para los campos
+  with st.form("entry_form", clear_on_submit=True):
+
+    st.subheader("Nuevo Articulo")
+    col1, col2 = st.columns(2)
+
+    with col1:
+      articulo = st.text_input("Articulo", max_chars=100)
+      tipo = st.selectbox("Tipo", TIPOS)
+      frecuencia = st.selectbox("Frecuencia", FRECUENCIAS)
+      urgencia = st.slider("Urgencia (1 = puede esperar, 5 = ya)", 1, 5, 3)
+    with col2:
+      # value=None deja el campo vacio: vacio significa "por cotizar" (nunca se guarda 0)
+      costo_estimado = st.number_input("Costo Estimado (vacío = por cotizar)", value=None, min_value=0.0)
+      estado = st.selectbox("Estado", ESTADOS)
+      valor = st.slider("Valor percibido (1 = poco, 5 = mucho)", 1, 5, 3)
+      notas = st.text_area("Notas")
+
+    submit_button = st.form_submit_button(label="Guardar", width="stretch")
+
+    if submit_button:
+      nombre = articulo.strip()
+
+      # Reunir todos los problemas antes de decidir si se guarda
+      errores = []
+      if nombre == "":
+        errores.append("Por favor, completa al menos el campo de Articulo.")
+      elif df["Articulo"].str.lower().eq(nombre.lower()).fillna(False).any():
+        errores.append(f"'{nombre}' ya está en la lista.")
+      if costo_estimado is not None and costo_estimado <= 0:
+        errores.append("Si aún no lo cotizaste, deja el costo vacío (no pongas 0).")
+
+      if errores:
+        for error in errores:
+          st.error(error)
+      else:
+        nuevo_articulo = pd.DataFrame([{
+            "Articulo": nombre,
+            "Tipo": tipo,
+            "Costo Estimado": float("nan") if costo_estimado is None else costo_estimado,
+            "Estado": estado,
+            "Notas": notas,
+            "Frecuencia": frecuencia,
+            "Urgencia": urgencia,
+            "Valor": valor,
+            "Fecha de alta": pd.Timestamp.today().normalize(),
+        }])
+
+        # Concatenar en una copia: df solo cambia si el guardado sale bien
+        df_actualizado = pd.concat([df, nuevo_articulo], ignore_index=True)
+
+        # se reenvian TODAS las hojas: lo que no se escribe se pierde
+        if guardar({**hojas, "WishList": df_actualizado}):
+          df = df_actualizado
+          st.success("¡Datos guardados exitosamente en el Excel!")
+
+  # Visualización rápida de los datos actuales
+  st.divider()
+  st.subheader("Vista previa de los datos actuales")
+  st.dataframe(df, width="stretch")
+
+  # Botón de descarga directa
+  if archivo.exists() and not usar_demo:
+    with open(archivo, "rb") as f:
+      st.download_button(
+          label="📥 Descargar Excel Actualizado",
+          data=f,
+          file_name=archivo.name,
+          mime=(
+              "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
+          ),
+      )
+
+with tab_perfil:
+  st.subheader("Perfil financiero")
+  st.caption("Base de la regla 50/30/20: necesidades 50%, deseos 30%, ahorro 20% de tu ingreso neto.")
+
+  fila_actual = perfil.iloc[0] if not perfil.empty else None
+
+  with st.form("perfil_form"):
+    valores = {
+        columna: st.number_input(columna, min_value=0.0, value=valor_inicial(fila_actual, columna))
+        for columna in COLUMNAS_PERFIL
+    }
+    guardar_perfil = st.form_submit_button(label="Guardar perfil", width="stretch")
+
+  if guardar_perfil:
+    if valores["Ingreso Neto Mensual"] <= 0:
+      st.error("El ingreso neto mensual debe ser mayor que cero.")
+    elif guardar({**hojas, "Perfil": pd.DataFrame([valores])}):
+      st.success("Perfil guardado.")
+      perfil = pd.DataFrame([valores])
+
+  st.dataframe(perfil, width="stretch")
+
+# se calcula al final para usar el df y el perfil ya actualizados en esta ejecucion
+with tab_analisis:
+  perfil_actual = perfil_desde_hoja(perfil)
+
+  if not perfil_actual.completo:
+    st.info("Completa tu perfil financiero (pestaña anterior) para ver el análisis.")
+  else:
+    presupuesto = presupuesto_503020(perfil_actual.ingreso)
+    col_a, col_b, col_c = st.columns(3)
+    col_a.metric("Necesidades (50%)", f"{presupuesto['Necesidades']:,.0f}", f"quedan {margen_necesidades(perfil_actual):,.0f}")
+    col_b.metric("Deseos (30%)", f"{presupuesto['Deseos']:,.0f}", f"quedan {deseos_disponibles(perfil_actual):,.0f}")
+    col_c.metric("Ahorro (20%)", f"{presupuesto['Ahorro']:,.0f}")
+
+    cubiertos = meses_fondo_cubiertos(perfil_actual)
+    if fondo_completo(perfil_actual):
+      st.success(f"Fondo de emergencia completo: cubre {cubiertos:.1f} meses de gastos fijos.")
+    elif pd.isna(cubiertos):
+      st.warning("Indica tus gastos fijos para calcular tu fondo de emergencia.")
+    else:
+      st.warning(f"Fondo de emergencia incompleto: cubre {cubiertos:.1f} meses. Los deseos esperan hasta completarlo.")
+
+  analisis = analizar_wishlist(df, perfil_actual).sort_values("Puntaje", ascending=False)
+  vista = analisis[COLUMNAS_ANALISIS].assign(
+    Semaforo=analisis["Semaforo"].map(ICONOS_SEMAFORO),
+    **{"Meses de Espera": analisis["Meses de Espera"].replace(float("inf"), float("nan"))},
+  )
+  st.dataframe(vista, width="stretch", hide_index=True)
+
+with tab_dashboard:
+  if not perfil_actual.completo:
+    st.info("Completa tu perfil financiero para ver el dashboard.")
+  else:
+    pendientes = analisis[analisis["Semaforo"] != "Comprado"]
+    con_precio = pendientes[pendientes["Costo Estimado"] > 0]
+    total_pendiente = con_precio["Costo Estimado"].sum()
+    plazos = pendientes["Meses de Espera"].replace(float("inf"), float("nan")).dropna()
+
+    k1, k2, k3, k4 = st.columns(4)
+    k1.metric("Pendiente (con precio)", f"{total_pendiente:,.0f}")
+    k2.metric("% de un mes de ingreso", f"{total_pendiente / perfil_actual.ingreso * 100:.0f}%")
+    k3.metric("Plazo para cumplir la lista", f"{int(plazos.max())} meses" if not plazos.empty else "—")
+    k4.metric("Por cotizar", int((analisis["Semaforo"] == "Por cotizar").sum()))
+
+    cuenta = analisis["Semaforo"].value_counts()
+    st.caption(
+      "  ·  ".join(f"{ICONOS_SEMAFORO.get(nombre, nombre)}: {cantidad}" for nombre, cantidad in cuenta.items())
+    )
+
+    st.plotly_chart(grafico_503020(perfil_actual), width="stretch")
+    st.plotly_chart(grafico_ranking(analisis), width="stretch")
+    st.plotly_chart(grafico_plan_de_compras(analisis, perfil_actual), width="stretch")
