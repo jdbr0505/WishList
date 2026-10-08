@@ -6,9 +6,10 @@ table TablaAnalisis
 			SUM ( TablaAnalisis[Costo Estimado]
 			) 
 			```
+		formatString: \$#,0.00;(\$#,0.00);\$#,0.00
 		lineageTag: 85823675-0329-41fb-b5ef-621397c9a075
 
-		annotation PBI_FormatHint = {"isGeneralNumber":true}
+		annotation PBI_FormatHint = {"currencyCulture":"en-US"}
 
 	measure 'Articulos Pendientes' =
 			
@@ -42,14 +43,18 @@ table TablaAnalisis
 			    SUM ( TablaAnalisis[Costo Estimado] ),
 			    TablaAnalisis[Semaforo] <> "Comprado"
 			)
-		formatString: 0
+		formatString: \$#,0.00;(\$#,0.00);\$#,0.00
 		lineageTag: 8418ed9c-c855-4de6-9bfb-13820d487ff8
+
+		annotation PBI_FormatHint = {"currencyCulture":"en-US"}
 
 	measure 'Ingreso Mensual' =
 			
 			MAX ( TablaPerfil[Ingreso Neto Mensual] )
-		formatString: 0
+		formatString: \$#,0.00;(\$#,0.00);\$#,0.00
 		lineageTag: 6ac6eb99-7140-47c7-b533-f060302d8c43
+
+		annotation PBI_FormatHint = {"currencyCulture":"en-US"}
 
 	measure '% de un Mes de Ingreso' =
 			
@@ -63,16 +68,16 @@ table TablaAnalisis
 			    [Costo Total],
 			    CALCULATE ( [Costo Total], ALL ( TablaAnalisis[Semaforo] ) )
 			)
+		formatString: 0.00\ %;-0.00\ %;0.00\ %
 		lineageTag: 23a1e879-f5d0-40c2-81c9-83775318a7e4
 
-		annotation PBI_FormatHint = {"isGeneralNumber":true}
 
 	measure 'Necesidades Real %' =
 			
 			DIVIDE ( MAX ( TablaPerfil[Gastos fijos] ), [Ingreso Mensual] )
+		formatString: 0.00\ %;-0.00\ %;0.00\ %
 		lineageTag: f2a6a72c-d8c3-4c7e-bc69-db4ffc7a6a3e
 
-		annotation PBI_FormatHint = {"isGeneralNumber":true}
 
 	measure 'Comprar Ya' =
 			
@@ -110,12 +115,14 @@ table TablaAnalisis
 
 	column 'Costo Estimado'
 		dataType: double
-		formatString: 0
+		formatString: \$#,0.00;(\$#,0.00);\$#,0.00
 		lineageTag: 30da188a-6cb4-4e49-8128-95353a34fcf4
 		summarizeBy: sum
 		sourceColumn: Costo Estimado
 
 		annotation SummarizationSetBy = Automatic
+
+		annotation PBI_FormatHint = {"currencyCulture":"en-US"}
 
 	column Estado
 		dataType: string
@@ -206,13 +213,15 @@ table TablaAnalisis
 		annotation PBI_FormatHint = {"isGeneralNumber":true}
 
 	column 'Compromiso Mensual'
-		dataType: int64
-		formatString: 0
+		dataType: double
+		formatString: \$#,0.00;(\$#,0.00);\$#,0.00
 		lineageTag: 6b20f23e-77fc-481b-8a2e-8c1d1376e708
 		summarizeBy: sum
 		sourceColumn: Compromiso Mensual
 
 		annotation SummarizationSetBy = Automatic
+
+		annotation PBI_FormatHint = {"currencyCulture":"en-US"}
 
 	column 'Meses de Espera'
 		dataType: double
@@ -261,7 +270,7 @@ table TablaAnalisis
 				let
 				  Source = Excel.Workbook(File.Contents("C:\Users\jdbr0\OneDrive\Desktop\Python practicas\powerbi\WishList_demo.xlsx"), null, true),
 				  #"Navigation 1" = Source{[Item = "TablaAnalisis", Kind = "Table"]}[Data],
-				  #"Changed column type" = Table.TransformColumnTypes(#"Navigation 1", {{"Articulo", type text}, {"Tipo", type text}, {"Costo Estimado", type number}, {"Estado", type text}, {"Frecuencia", type text}, {"Urgencia", Int64.Type}, {"Valor", Int64.Type}, {"Puntaje", type number}, {"% del Ingreso", type number}, {"Impacto en Fondo %", type number}, {"Compromiso Mensual", Int64.Type}, {"Meses de Espera", type number}, {"Fecha Estimada", type date}, {"Semaforo", type text}, {"Motivo", type text}, {"Notas", type text}, {"Fecha de alta", type date}}, "en-US")
+				  #"Changed column type" = Table.TransformColumnTypes(#"Navigation 1", {{"Articulo", type text}, {"Tipo", type text}, {"Costo Estimado", type number}, {"Estado", type text}, {"Frecuencia", type text}, {"Urgencia", Int64.Type}, {"Valor", Int64.Type}, {"Puntaje", type number}, {"% del Ingreso", type number}, {"Impacto en Fondo %", type number}, {"Compromiso Mensual", type number}, {"Meses de Espera", type number}, {"Fecha Estimada", type date}, {"Semaforo", type text}, {"Motivo", type text}, {"Notas", type text}, {"Fecha de alta", type date}}, "en-US")
 				in
 				  #"Changed column type"
 

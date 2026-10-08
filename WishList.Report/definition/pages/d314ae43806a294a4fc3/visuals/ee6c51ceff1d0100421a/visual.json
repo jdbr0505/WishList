@@ -4,7 +4,7 @@
   "position": {
     "x": 979.02657415892133,
     "y": 229.82694069904437,
-    "z": 1000,
+    "z": 2000,
     "height": 398.12540908495879,
     "width": 910.25945804424668,
     "tabOrder": 1000
@@ -239,6 +239,13 @@
                   "Value": "true"
                 }
               }
+            },
+            "bold": {
+              "expr": {
+                "Literal": {
+                  "Value": "true"
+                }
+              }
             }
           }
         }
@@ -268,39 +275,6 @@
   },
   "filterConfig": {
     "filters": [
-      {
-        "name": "c873b7969312ce735ab1",
-        "field": {
-          "Column": {
-            "Expression": {
-              "SourceRef": {
-                "Entity": "TablaAnalisis"
-              }
-            },
-            "Property": "Articulo"
-          }
-        },
-        "type": "Categorical"
-      },
-      {
-        "name": "4db79a723038b0b18376",
-        "field": {
-          "Aggregation": {
-            "Expression": {
-              "Column": {
-                "Expression": {
-                  "SourceRef": {
-                    "Entity": "TablaAnalisis"
-                  }
-                },
-                "Property": "Puntaje"
-              }
-            },
-            "Function": 0
-          }
-        },
-        "type": "Advanced"
-      },
       {
         "name": "413d03bb1154c216cefd",
         "field": {

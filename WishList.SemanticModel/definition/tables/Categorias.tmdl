@@ -15,16 +15,16 @@ table Categorias
 	measure 'Deseos Real %' =
 			
 			DIVIDE ( MAX ( TablaPerfil[Deseos ya gastados] ), [Ingreso Mensual] )
+		formatString: 0.00\ %;-0.00\ %;0.00\ %
 		lineageTag: 532bfc14-889a-4dc1-bd27-5296d28fa7d4
 
-		annotation PBI_FormatHint = {"isGeneralNumber":true}
 
 	measure 'Ahorro Real %' =
 			
 			1 - [Necesidades Real %] - [Deseos Real %]
+		formatString: 0.00\ %;-0.00\ %;0.00\ %
 		lineageTag: 50dc5f63-10b6-4fe5-bf0f-dce606da2357
 
-		annotation PBI_FormatHint = {"isGeneralNumber":true}
 
 	measure 'Real %' =
 			

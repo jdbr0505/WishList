@@ -2,44 +2,52 @@ table TablaPerfil
 	lineageTag: 2adf71b0-5dbb-4969-a49c-c6763ec31747
 
 	column 'Ingreso Neto Mensual'
-		dataType: int64
-		formatString: 0
+		dataType: double
+		formatString: \$#,0.00;(\$#,0.00);\$#,0.00
 		lineageTag: b97b0983-3657-418b-b4c7-c01a7d07ac21
 		summarizeBy: sum
 		sourceColumn: Ingreso Neto Mensual
 
 		annotation SummarizationSetBy = Automatic
 
+		annotation PBI_FormatHint = {"currencyCulture":"en-US"}
+
 	column 'Gastos fijos'
-		dataType: int64
-		formatString: 0
+		dataType: double
+		formatString: \$#,0.00;(\$#,0.00);\$#,0.00
 		lineageTag: 735b1ca2-a4c4-46de-8043-d5cebcde267e
 		summarizeBy: sum
 		sourceColumn: Gastos fijos
 
 		annotation SummarizationSetBy = Automatic
 
+		annotation PBI_FormatHint = {"currencyCulture":"en-US"}
+
 	column 'Deseos ya gastados'
-		dataType: int64
-		formatString: 0
+		dataType: double
+		formatString: \$#,0.00;(\$#,0.00);\$#,0.00
 		lineageTag: 419e5215-113b-4b25-b6e9-2d1d3615145e
 		summarizeBy: sum
 		sourceColumn: Deseos ya gastados
 
 		annotation SummarizationSetBy = Automatic
 
+		annotation PBI_FormatHint = {"currencyCulture":"en-US"}
+
 	column 'Ahorro actual'
-		dataType: int64
-		formatString: 0
+		dataType: double
+		formatString: \$#,0.00;(\$#,0.00);\$#,0.00
 		lineageTag: 33e69589-e298-4f5a-9b7c-457edf24ec63
 		summarizeBy: sum
 		sourceColumn: Ahorro actual
 
 		annotation SummarizationSetBy = Automatic
 
+		annotation PBI_FormatHint = {"currencyCulture":"en-US"}
+
 	column 'Meses de Fondo de emergencia objetivo'
-		dataType: int64
-		formatString: 0
+		dataType: double
+		formatString: 0.0
 		lineageTag: bcbab7b1-3cc3-4759-be61-04f0e689570c
 		summarizeBy: sum
 		sourceColumn: Meses de Fondo de emergencia objetivo
@@ -52,7 +60,7 @@ table TablaPerfil
 				let
 				  Source = Excel.Workbook(File.Contents("C:\Users\jdbr0\OneDrive\Desktop\Python practicas\powerbi\WishList_demo.xlsx"), null, true),
 				  #"Navigation 1" = Source{[Item = "TablaPerfil", Kind = "Table"]}[Data],
-				  #"Changed column type" = Table.TransformColumnTypes(#"Navigation 1", {{"Ingreso Neto Mensual", Int64.Type}, {"Gastos fijos", Int64.Type}, {"Deseos ya gastados", Int64.Type}, {"Ahorro actual", Int64.Type}, {"Meses de Fondo de emergencia objetivo", Int64.Type}}, "en-US")
+				  #"Changed column type" = Table.TransformColumnTypes(#"Navigation 1", {{"Ingreso Neto Mensual", type number}, {"Gastos fijos", type number}, {"Deseos ya gastados", type number}, {"Ahorro actual", type number}, {"Meses de Fondo de emergencia objetivo", type number}}, "en-US")
 				in
 				  #"Changed column type"
 

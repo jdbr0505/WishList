@@ -3,9 +3,9 @@
   "name": "1314b0e8c0632e6f6ff4",
   "position": {
     "x": 883.114543788454,
-    "y": 646.04895928786493,
-    "z": 4000,
-    "height": 385.45778243225556,
+    "y": 649.66828118863725,
+    "z": 5000,
+    "height": 381.83846053148318,
     "width": 1006.171488414714,
     "tabOrder": 4000
   },
@@ -104,7 +104,7 @@
                     "Entity": "TablaAnalisis"
                   }
                 },
-                "Property": "Meses de Espera"
+                "Property": "Articulo"
               }
             },
             "direction": "Ascending"
@@ -292,39 +292,6 @@
   "filterConfig": {
     "filters": [
       {
-        "name": "d5602f35d1e6827cda5b",
-        "field": {
-          "Column": {
-            "Expression": {
-              "SourceRef": {
-                "Entity": "TablaAnalisis"
-              }
-            },
-            "Property": "Articulo"
-          }
-        },
-        "type": "Categorical"
-      },
-      {
-        "name": "5cfeac4b604f04718a7a",
-        "field": {
-          "Aggregation": {
-            "Expression": {
-              "Column": {
-                "Expression": {
-                  "SourceRef": {
-                    "Entity": "TablaAnalisis"
-                  }
-                },
-                "Property": "Costo Estimado"
-              }
-            },
-            "Function": 0
-          }
-        },
-        "type": "Advanced"
-      },
-      {
         "name": "c238ad85c65037794032",
         "field": {
           "Column": {
@@ -395,34 +362,6 @@
             }
           ]
         }
-      },
-      {
-        "name": "ecc99b1189a0964d182f",
-        "field": {
-          "Column": {
-            "Expression": {
-              "SourceRef": {
-                "Entity": "TablaAnalisis"
-              }
-            },
-            "Property": "Motivo"
-          }
-        },
-        "type": "Categorical"
-      },
-      {
-        "name": "dba24e06d84ca56e9c78",
-        "field": {
-          "Column": {
-            "Expression": {
-              "SourceRef": {
-                "Entity": "TablaAnalisis"
-              }
-            },
-            "Property": "Meses de Espera"
-          }
-        },
-        "type": "Advanced"
       }
     ]
   }

@@ -11,13 +11,13 @@
       "type": "SharedResources"
     },
     "customTheme": {
-      "name": "Innovate",
+      "name": "Innovate9042336177869155.json",
       "reportVersionAtImport": {
         "visual": "2.13.0",
         "report": "3.4.0",
         "page": "2.3.1"
       },
-      "type": "SharedResources"
+      "type": "RegisteredResources"
     }
   },
   "objects": {
@@ -64,10 +64,16 @@
           "name": "Fluent2-CY26SU09",
           "path": "BaseThemes/Fluent2-CY26SU09.json",
           "type": "BaseTheme"
-        },
+        }
+      ]
+    },
+    {
+      "name": "RegisteredResources",
+      "type": "RegisteredResources",
+      "items": [
         {
-          "name": "Innovate",
-          "path": "BuiltInThemes/Innovate.json",
+          "name": "Innovate9042336177869155.json",
+          "path": "Innovate9042336177869155.json",
           "type": "CustomTheme"
         }
       ]

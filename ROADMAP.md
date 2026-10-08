@@ -157,6 +157,7 @@ Excel (en un libro aparte que se conecte a `TablaWishList.xlsx`, no dentro de é
 Power BI (siguiendo `powerbi/GUIA_POWER_BI.md`). Ejercicios B1 a B8:
 - [x] Conectar al `.xlsx` y cargar `TablaAnalisis` y `TablaPerfil`.
 - [x] Medidas DAX: total pendiente, % de un mes de ingreso, por cotizar, meta contra real, color del semáforo.
+- [x] Formato de dólares en el modelo: `Costo Total`, `Total Pendiente`, `Ingreso Mensual`, la columna `Costo Estimado`, `Compromiso Mensual` y las 4 columnas de dinero de `TablaPerfil`. Los tipos de dinero pasaron de entero a decimal (antes el entero redondeaba los centavos) y los porcentajes tienen formato de porcentaje. Falta abrir el proyecto y comprobar visualmente.
 - [x] Reporte de una página ("Dashboard") armado a mano: tarjetas, costo por decisión, ranking, meta contra real, tabla con semáforo y segmentadores.
 - [x] Guardado como `WishList.pbip`.
 - [x] Claude agregó la página 2 "Plan de compras" (`pg02PlanCompras`) con medidas nuevas `Comprar Ya`, `Esperar` y `No Conviene`. **Falta abrirla y verificar visualmente.**
