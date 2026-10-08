@@ -118,8 +118,10 @@ Verificación:
 
 - [x] Pestañas: Artículos, Perfil financiero, Análisis y Dashboard.
 - [x] Interruptor "Ver con datos de ejemplo" en la barra lateral (no lee ni modifica el Excel real).
-- [ ] Lista editable con `st.data_editor` (cambiar estado, editar costo, borrar).
-- [ ] Guardar los cambios del editor con `guardar_excel()` y la misma protección de errores.
+- [x] Pestaña "Editar lista" con `st.data_editor`: cambiar precios, estados y tipos, agregar y borrar filas. Nada se guarda hasta pulsar "Guardar cambios".
+- [x] Guardar los cambios del editor con la misma protección de errores. La lógica está en `datos_excel.py` (`preparar_edicion`, `validar_wishlist`, `resumir_cambios`) y tiene tests (45 en total). Probado en el navegador sobre una copia: editar un costo y borrar una fila actualizan `WishList`, `Analisis` y los rangos de las Tablas.
+- [x] Al guardar desde el editor, los costos en 0 pasan a vacío ("por cotizar") y la app avisa cuántos fueron.
+- [ ] Probar en el navegador agregar una fila nueva desde el editor (solo está probado con tests).
 - [ ] Filtros: estado, tipo, semáforo.
 - [ ] Botón de descarga que genere el Excel en memoria (`BytesIO`) en lugar de leer el archivo del disco.
 - [ ] Estado de sesión (`st.session_state`) solo donde haga falta; anotar por qué.

@@ -4,8 +4,8 @@ import pandas as pd
 import streamlit as st
 
 from datos_excel import (
-  COLUMNAS_PERFIL, ESTADOS, FRECUENCIAS, TIPOS,
-  cargar_datos, guardar_excel,
+  COLUMNAS_PERFIL, ESTADOS, FRECUENCIAS, TIPOS, TIPOS_VALIDOS,
+  cargar_datos, guardar_excel, preparar_edicion,
 )
 from datos_demo import hojas_demo
 from graficos import grafico_503020, grafico_plan_de_compras, grafico_ranking
@@ -72,8 +72,8 @@ hojas = hojas_demo() if usar_demo else cargar_datos(archivo)
 df = hojas["WishList"]
 perfil = hojas["Perfil"]
 
-tab_articulos, tab_perfil, tab_analisis, tab_dashboard = st.tabs(
-  ["Artículos", "Perfil financiero", "Análisis", "Dashboard"]
+tab_articulos, tab_editar, tab_perfil, tab_analisis, tab_dashboard = st.tabs(
+  ["Artículos", "Editar lista", "Perfil financiero", "Análisis", "Dashboard"]
 )
 
 with tab_articulos:
@@ -149,6 +149,57 @@ with tab_articulos:
               "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
           ),
       )
+
+with tab_editar:
+  st.subheader("Editar lista")
+  st.caption(
+    "Cambia precios, estados o tipos directo en la tabla. Para borrar, marca la casilla de la fila "
+    "y pulsa Suprimir. Para agregar, escribe en la última fila. Nada se guarda hasta pulsar «Guardar cambios»."
+  )
+  # tras guardar se recarga la pagina; el mensaje se guarda en session_state para que sobreviva a la recarga
+  if "mensaje_editor" in st.session_state:
+    st.success(st.session_state.pop("mensaje_editor"))
+
+  # cambiar la clave reinicia el editor: asi no queda un "delta" viejo aplicado sobre datos ya guardados
+  version_editor = st.session_state.get("version_editor", 0)
+  editado = st.data_editor(
+    df,
+    key=f"editor_{version_editor}",
+    num_rows="dynamic",
+    hide_index=True,
+    width="stretch",
+    disabled=["Fecha de alta"],
+    column_config={
+      "Articulo": st.column_config.TextColumn("Articulo", required=True, max_chars=100),
+      "Tipo": st.column_config.SelectboxColumn("Tipo", options=TIPOS_VALIDOS),
+      "Costo Estimado": st.column_config.NumberColumn("Costo Estimado", min_value=0.0, help="Vacío = por cotizar"),
+      "Estado": st.column_config.SelectboxColumn("Estado", options=ESTADOS),
+      "Frecuencia": st.column_config.SelectboxColumn("Frecuencia", options=FRECUENCIAS),
+      "Urgencia": st.column_config.NumberColumn("Urgencia", min_value=1, max_value=5, step=1),
+      "Valor": st.column_config.NumberColumn("Valor", min_value=1, max_value=5, step=1),
+      "Fecha de alta": st.column_config.DateColumn("Fecha de alta"),
+    },
+  )
+
+  if st.button("Guardar cambios", type="primary", key=f"guardar_editor_{version_editor}"):
+    lista_limpia, errores_edicion, cambios = preparar_edicion(df, editado)
+    hay_cambios = cambios["agregadas"] or cambios["borradas"] or cambios["modificadas"]
+
+    if errores_edicion:
+      for error in errores_edicion:
+        st.error(error)
+    elif not hay_cambios:
+      st.info("No hay cambios para guardar.")
+    elif guardar({**hojas, "WishList": lista_limpia}):
+      mensaje = (
+        f"Cambios guardados. Filas modificadas: {cambios['modificadas']}, "
+        f"agregadas: {cambios['agregadas']}, borradas: {cambios['borradas']}."
+      )
+      if cambios["costos_en_cero"]:
+        mensaje += f" {cambios['costos_en_cero']} costos en 0 pasaron a «por cotizar» (vacío)."
+      st.session_state["mensaje_editor"] = mensaje
+      st.session_state["version_editor"] = version_editor + 1
+      st.rerun()
 
 with tab_perfil:
   st.subheader("Perfil financiero")

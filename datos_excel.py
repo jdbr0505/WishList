@@ -16,6 +16,7 @@ COLUMNAS_PERFIL = [
 ]
 
 TIPOS = ["Deseo", "Necesidad"]
+TIPOS_VALIDOS = TIPOS + ["Sin clasificar"]  # "Sin clasificar" es el valor por defecto de los datos viejos
 ESTADOS = ["Pendiente", "Comprado"]
 FRECUENCIAS = ["Único", "Mensual", "Anual"]
 
@@ -53,6 +54,99 @@ def normalizar_wishlist(datos):
 
   limpios["Fecha de alta"] = pd.to_datetime(limpios["Fecha de alta"], errors="coerce")
   return limpios
+
+
+def _nombres_o_fila(datos):
+  """Etiqueta de cada fila para mensajes de error: el nombre, o 'fila N' si no tiene."""
+  nombres = datos["Articulo"].astype(object)
+  return [
+    n if isinstance(n, str) and n.strip() else f"fila {posicion + 1}"
+    for posicion, n in enumerate(nombres)
+  ]
+
+
+def validar_wishlist(datos):
+  """Revisa una WishList ya normalizada y devuelve la lista de problemas (vacia si esta bien)."""
+  errores = []
+  etiquetas = pd.Series(_nombres_o_fila(datos), index=datos.index)
+  nombres = datos["Articulo"]
+
+  sin_nombre = nombres.isna() | nombres.eq("").fillna(False)
+  if sin_nombre.any():
+    errores.append(f"Faltan nombres en: {', '.join(etiquetas[sin_nombre])}. Escribe el nombre o borra la fila.")
+
+  con_nombre = nombres[~sin_nombre]
+  repetidos = con_nombre[con_nombre.str.lower().duplicated(keep=False)]
+  if not repetidos.empty:
+    errores.append(f"Artículos repetidos: {', '.join(sorted(set(repetidos)))}.")
+
+  costos = pd.to_numeric(datos["Costo Estimado"], errors="coerce")
+  if (costos <= 0).any():
+    errores.append(
+      f"El costo debe ser mayor que cero (o vacío si falta cotizar): {', '.join(etiquetas[costos <= 0])}."
+    )
+
+  for columna in COLUMNAS_PUNTAJE:
+    fuera = ~datos[columna].between(1, 5)
+    if fuera.any():
+      errores.append(f"{columna} debe estar entre 1 y 5: {', '.join(etiquetas[fuera])}.")
+
+  for columna, validos in (("Tipo", TIPOS_VALIDOS), ("Estado", ESTADOS), ("Frecuencia", FRECUENCIAS)):
+    invalidos = ~datos[columna].isin(validos)
+    if invalidos.any():
+      errores.append(f"{columna} no válido en: {', '.join(etiquetas[invalidos])}.")
+  return errores
+
+
+def _columna_cambio(antes, despues):
+  """True en las filas donde el valor cambio. NaN contra vacio no cuenta como cambio."""
+  if pd.api.types.is_numeric_dtype(antes) and pd.api.types.is_numeric_dtype(despues):
+    iguales = (antes == despues) | (antes.isna() & despues.isna())
+    return ~iguales
+  def como_texto(serie):
+    return serie.astype(object).where(serie.notna(), "").astype(str).str.strip()
+
+  return como_texto(antes) != como_texto(despues)
+
+
+def resumir_cambios(original, editado):
+  """Cuenta filas agregadas, borradas y modificadas entre la lista original y la editada."""
+  mantenidas = editado.index.intersection(original.index)
+  # la fecha de alta no se edita a mano: se ignora para no marcar cambios falsos
+  columnas = [c for c in original.columns if c in editado.columns and c != "Fecha de alta"]
+
+  modificadas = pd.Series(False, index=mantenidas)
+  for columna in columnas:
+    modificadas |= _columna_cambio(original.loc[mantenidas, columna], editado.loc[mantenidas, columna])
+  return {
+    "agregadas": len(editado) - len(mantenidas),
+    "borradas": len(original) - len(mantenidas),
+    "modificadas": int(modificadas.sum()),
+  }
+
+
+def preparar_edicion(original, editado, hoy=None):
+  """Convierte la tabla editada en una WishList lista para guardar.
+
+  Devuelve (lista_limpia, errores, cambios). Las filas nuevas reciben la fecha de alta de hoy.
+  """
+  hoy = hoy if hoy is not None else pd.Timestamp.today().normalize()
+  cambios = resumir_cambios(original, editado)
+
+  trabajo = editado.copy()
+  es_nueva = ~trabajo.index.isin(original.index)
+  if es_nueva.any():
+    trabajo["Fecha de alta"] = trabajo["Fecha de alta"].astype("datetime64[ns]")
+    trabajo.loc[es_nueva, "Fecha de alta"] = hoy
+  limpia = normalizar_wishlist(trabajo).reset_index(drop=True)
+
+  # un costo 0 significa "aun no cotizado" (asi lo trata el semaforo): se guarda vacio, y se avisa.
+  # Sin esto, los 0 de datos viejos bloquearian cualquier edicion no relacionada.
+  costos = pd.to_numeric(limpia["Costo Estimado"], errors="coerce")
+  en_cero = costos == 0
+  limpia["Costo Estimado"] = costos.mask(en_cero)
+  cambios["costos_en_cero"] = int(en_cero.sum())
+  return limpia, validar_wishlist(limpia), cambios
 
 
 def normalizar_perfil(datos):

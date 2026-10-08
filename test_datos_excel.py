@@ -4,6 +4,7 @@ import pandas as pd
 from datos_excel import (
   COLUMNAS_PERFIL, COLUMNAS_WISHLIST,
   cargar_datos, guardar_excel, normalizar_perfil, normalizar_wishlist,
+  preparar_edicion, resumir_cambios, validar_wishlist,
 )
 
 
@@ -60,6 +61,95 @@ def test_normalizar_perfil_limpia_cabeceras():
                                 "Ahorro actual", "Meses de Fondo de emergencia objetivo"])
 
   assert list(normalizar_perfil(sucio).columns) == COLUMNAS_PERFIL
+
+
+def _lista_normalizada():
+  return normalizar_wishlist(pd.DataFrame({
+    "Articulo": ["Medias", "Mouse", "Pedalera"],
+    "Tipo": ["Necesidad", "Necesidad", "Deseo"],
+    "Costo Estimado": [30.0, 60.0, None],
+    "Estado": ["Pendiente", "Pendiente", "Pendiente"],
+  }))
+
+
+def test_validar_wishlist_acepta_una_lista_correcta():
+  assert validar_wishlist(_lista_normalizada()) == []
+
+
+def test_validar_wishlist_detecta_nombre_vacio_repetido_y_costo_cero():
+  lista = _lista_normalizada()
+  lista.loc[0, "Articulo"] = "mouse"        # repetido con "Mouse" aunque cambie la mayuscula
+  lista.loc[2, "Articulo"] = ""            # sin nombre
+  lista.loc[1, "Costo Estimado"] = 0.0     # costo cero
+
+  errores = validar_wishlist(lista)
+
+  assert any("Faltan nombres" in e and "fila 3" in e for e in errores)
+  assert any("repetidos" in e for e in errores)
+  assert any("mayor que cero" in e for e in errores)
+
+
+def test_validar_wishlist_detecta_puntajes_fuera_de_rango():
+  lista = _lista_normalizada()
+  lista.loc[0, "Urgencia"] = 9
+
+  errores = validar_wishlist(lista)
+
+  assert any("Urgencia" in e and "Medias" in e for e in errores)
+
+
+def test_resumir_cambios_cuenta_agregadas_borradas_y_modificadas():
+  original = _lista_normalizada()
+  editado = original.drop(index=1)                       # borra Mouse
+  editado.loc[0, "Costo Estimado"] = 35.0                # modifica Medias
+  editado.loc[7] = editado.loc[0]                        # agrega una fila (indice nuevo)
+
+  assert resumir_cambios(original, editado) == {"agregadas": 1, "borradas": 1, "modificadas": 1}
+
+
+def test_resumir_cambios_sin_cambios_y_vacio_contra_nan():
+  original = _lista_normalizada()
+  editado = original.copy()
+  editado["Notas"] = None   # NaN contra None no es un cambio
+
+  assert resumir_cambios(original, editado) == {"agregadas": 0, "borradas": 0, "modificadas": 0}
+
+
+def test_preparar_edicion_da_fecha_de_hoy_a_las_filas_nuevas_y_defectos():
+  original = _lista_normalizada()
+  hoy = pd.Timestamp("2026-10-08")
+  editado = original.copy()
+  editado.loc[9] = [" Teclado ", None, 90.0, None, None, None, None, None, None, None][: len(editado.columns)]
+
+  limpia, errores, cambios = preparar_edicion(original, editado, hoy)
+
+  nueva = limpia[limpia["Articulo"] == "Teclado"].iloc[0]
+  assert errores == []
+  assert cambios["agregadas"] == 1
+  assert nueva["Fecha de alta"] == hoy
+  assert nueva["Tipo"] == "Sin clasificar" and nueva["Estado"] == "Pendiente" and nueva["Urgencia"] == 3
+  assert list(limpia.index) == [0, 1, 2, 3]
+
+
+def test_preparar_edicion_convierte_costos_en_cero_a_por_cotizar_y_avisa():
+  original = _lista_normalizada()
+  original.loc[0, "Costo Estimado"] = 0.0     # dato viejo con costo 0
+  editado = original.copy()
+  editado.loc[1, "Costo Estimado"] = 65.0     # el usuario solo cambia otro precio
+
+  limpia, errores, cambios = preparar_edicion(original, editado)
+
+  assert errores == []
+  assert pd.isna(limpia.loc[0, "Costo Estimado"])
+  assert cambios["costos_en_cero"] == 1 and cambios["modificadas"] == 1
+
+
+def test_preparar_edicion_sin_cambios_no_reporta_cambios_reales():
+  original = _lista_normalizada()
+
+  _, _, cambios = preparar_edicion(original, original.copy())
+
+  assert (cambios["agregadas"], cambios["borradas"], cambios["modificadas"]) == (0, 0, 0)
 
 
 def test_guardar_y_cargar_conserva_ambas_hojas_con_una_tabla_cada_una(tmp_path):
