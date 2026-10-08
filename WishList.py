@@ -1,4 +1,5 @@
 #importar librerias necesarias para el sistema
+import os
 from pathlib import Path
 import pandas as pd
 import streamlit as st
@@ -30,6 +31,22 @@ COLUMNAS_ANALISIS = [
 
 #ruta del archivo excel junto a este script (no depende de la carpeta desde donde se lance streamlit)
 archivo = Path(__file__).parent / "TablaWishList.xlsx"
+
+VALORES_SI = {"1", "true", "si", "sí", "yes"}
+
+
+def modo_solo_demo():
+  """True si la app corre como demostracion publica: solo datos inventados, sin leer ni guardar el Excel.
+
+  Se activa con la variable de entorno (o secreto de Streamlit) WISHLIST_SOLO_DEMO=1.
+  Es lo que se configura al desplegar la app; en tu computadora no se define y la app funciona normal.
+  """
+  if os.environ.get("WISHLIST_SOLO_DEMO", "").strip().lower() in VALORES_SI:
+    return True
+  try:
+    return str(st.secrets.get("WISHLIST_SOLO_DEMO", "")).strip().lower() in VALORES_SI
+  except Exception:  # sin archivo de secretos: no es una demostracion
+    return False
 
 # Configuración de la página
 st.set_page_config(
@@ -71,12 +88,18 @@ def valor_inicial(fila, columna):
   return float(fila[columna])
 
 
-usar_demo = st.sidebar.toggle(
-  "Ver con datos de ejemplo",
-  help="Muestra el sistema con datos inventados. No lee ni modifica tu Excel.",
-)
-if usar_demo:
-  st.sidebar.info("Modo ejemplo activo: lo que ves no son tus datos y no se guarda nada.")
+if modo_solo_demo():
+  # demostracion publica: el interruptor no existe, asi que no hay forma de pedir los datos reales
+  usar_demo = True
+  st.info("Demostración con datos inventados. Aquí no se guarda nada; puedes explorar todas las pestañas.")
+  st.sidebar.info("Versión de demostración: los datos son inventados y no se guarda nada.")
+else:
+  usar_demo = st.sidebar.toggle(
+    "Ver con datos de ejemplo",
+    help="Muestra el sistema con datos inventados. No lee ni modifica tu Excel.",
+  )
+  if usar_demo:
+    st.sidebar.info("Modo ejemplo activo: lo que ves no son tus datos y no se guarda nada.")
 
 hojas = hojas_demo() if usar_demo else cargar_datos(archivo)
 df = hojas["WishList"]

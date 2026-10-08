@@ -5,3 +5,10 @@
 __pycache__/
 *.pyc
 .pytest_cache/
+
+# Datos personales REALES: no subir nunca a git (tienen ingresos, gastos y ahorro).
+# El respaldo de estos archivos es tu carpeta de OneDrive, no git.
+# powerbi/WishList_demo.xlsx (datos inventados) si se sube a proposito.
+TablaWishList*.xlsx
+WishList.xlsx
+*.pbix

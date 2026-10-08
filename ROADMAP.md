@@ -35,6 +35,7 @@ python -m pytest
 - **Tipo vacío pasa a "Sin clasificar" y Estado vacío a "Pendiente"** al cargar (decisión de Claude, se puede cambiar).
 - **Un gasto fuera de alcance** (que, solo, tardaría más de 6 meses) no bloquea la fila de espera de los gastos pequeños.
 - **Moneda: dólares (USD).** Todos los montos están en dólares. Los nombres de columna no cambian (así no se rompen el Excel ni Power BI): en la app se muestran como `$50.00` y en el Excel con formato de dólares. En Power BI hay que darle formato de moneda a las medidas (ver `powerbi/GUIA_POWER_BI.md`).
+- **Privacidad: la app real se queda en mi computadora.** No tiene contraseña y guarda en un Excel local. Lo único que se puede publicar es la demostración (`WISHLIST_SOLO_DEMO=1`), con datos inventados y sin acceso al Excel real. Los archivos con datos reales (`TablaWishList*.xlsx`, `WishList.xlsx`, `*.pbix`) están en `.gitignore`. Ver `docs/DESPLIEGUE.md`.
 - **Sin CSS ni HTML propios.** Streamlit genera la interfaz.
 - **Indentación:** una sola en todo el archivo (hoy 2 espacios). Mezclar niveles causó errores en la Fase 0.
 - **Power BI:** el proyecto es `WishList.pbip` (carpetas `WishList.Report` y `WishList.SemanticModel`). Hoy lee `powerbi/WishList_demo.xlsx`. Un `.pbip` no se crea desde cero: lo guarda Power BI Desktop. Claude no puede ver Desktop, así que la verificación visual es mía.
@@ -168,7 +169,11 @@ Ejercicios de Python (P1 a P13), reto final y preguntas de repaso: ver `docs/MAN
 
 ## Calidad y hábitos (transversal)
 
-- [x] `requirements.txt` con las librerías (`streamlit`, `pandas`, `openpyxl`, `plotly`, `pytest`). Falta fijar las versiones.
+- [x] `requirements.txt` (para correr la app) y `requirements-dev.txt` (suma `pytest`), con las versiones probadas fijadas.
+- [x] Demostración pública lista (`modo_solo_demo()` en `WishList.py`, `docs/DESPLIEGUE.md`, 3 tests en `test_modo_demo.py`). Falta publicarla yo en Streamlit Community Cloud, con el secreto `WISHLIST_SOLO_DEMO = "1"`.
+- [x] Datos reales fuera de git (`.gitignore` + dejaron de rastrearse). El historial todavía guarda versiones viejas: no hacer público el repositorio sin limpiarlo antes.
+- [ ] Integrar los commits de la remota (la rama local está adelantada y la remota tiene 2 commits nuevos) antes de hacer `git push`.
+- [ ] El flujo de GitHub Actions (`.github/workflows/python-app.yml`) quedó en Python 3.12 para coincidir con las versiones fijadas; falta ver que pase al subir.
 - [x] Repositorio git inicializado y con commits.
 - [ ] Hacer commits pequeños por fase (`feat:`, `fix:`, `docs:`). **Hacer commit antes de cada `git pull`.**
 - [ ] Funciones cortas, con nombres claros y type hints.
