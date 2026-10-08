@@ -1,0 +1,269 @@
+table TablaAnalisis
+	lineageTag: 30aff5c2-25eb-4d71-ab5b-5de2251063f3
+
+	measure 'Costo Total' = ```
+			
+			SUM ( TablaAnalisis[Costo Estimado]
+			) 
+			```
+		lineageTag: 85823675-0329-41fb-b5ef-621397c9a075
+
+		annotation PBI_FormatHint = {"isGeneralNumber":true}
+
+	measure 'Articulos Pendientes' =
+			
+			CALCULATE (
+			    COUNTROWS ( TablaAnalisis ),
+			    TablaAnalisis[Semaforo] <> "Comprado"
+			)
+		formatString: 0
+		lineageTag: d095cb01-5a9f-439f-ba0e-68f0f40ffd49
+
+	measure 'Por Cotizar' = ```
+			
+			CALCULATE (
+			    COUNTROWS ( TablaAnalisis ),
+			    TablaAnalisis[Semaforo] = "Por cotizar"
+			)
+			
+			```
+		formatString: 0
+		lineageTag: 529d01b1-43ec-4134-b7b6-f99c1f507452
+
+	measure Articulos =
+			
+			COUNTROWS ( TablaAnalisis )
+		formatString: 0
+		lineageTag: ac8a9708-4ec9-40fd-9c13-e9b507351500
+
+	measure 'Total Pendiente' =
+			
+			CALCULATE (
+			    SUM ( TablaAnalisis[Costo Estimado] ),
+			    TablaAnalisis[Semaforo] <> "Comprado"
+			)
+		formatString: 0
+		lineageTag: 8418ed9c-c855-4de6-9bfb-13820d487ff8
+
+	measure 'Ingreso Mensual' =
+			
+			MAX ( TablaPerfil[Ingreso Neto Mensual] )
+		formatString: 0
+		lineageTag: 6ac6eb99-7140-47c7-b533-f060302d8c43
+
+	measure '% de un Mes de Ingreso' =
+			
+			DIVIDE ( [Total Pendiente], [Ingreso Mensual] )
+		formatString: 0.00\ %;-0.00\ %;0.00\ %
+		lineageTag: 24f8aabc-4413-4449-a8e7-73859e5a4b2f
+
+	measure '% del Costo' =
+			
+			DIVIDE (
+			    [Costo Total],
+			    CALCULATE ( [Costo Total], ALL ( TablaAnalisis[Semaforo] ) )
+			)
+		lineageTag: 23a1e879-f5d0-40c2-81c9-83775318a7e4
+
+		annotation PBI_FormatHint = {"isGeneralNumber":true}
+
+	measure 'Necesidades Real %' =
+			
+			DIVIDE ( MAX ( TablaPerfil[Gastos fijos] ), [Ingreso Mensual] )
+		lineageTag: f2a6a72c-d8c3-4c7e-bc69-db4ffc7a6a3e
+
+		annotation PBI_FormatHint = {"isGeneralNumber":true}
+
+	measure 'Comprar Ya' =
+			
+			CALCULATE ( COUNTROWS ( TablaAnalisis ), TablaAnalisis[Semaforo] = "Comprar ya" )
+		formatString: 0
+		lineageTag: 5e6c1753-8e1c-4c05-8505-d8bdd175d821
+
+	measure Esperar =
+			
+			CALCULATE ( COUNTROWS ( TablaAnalisis ), TablaAnalisis[Semaforo] = "Esperar" )
+		formatString: 0
+		lineageTag: 2fbc2607-1d0b-445e-a67d-27660294cb3a
+
+	measure 'No Conviene' =
+			
+			CALCULATE ( COUNTROWS ( TablaAnalisis ), TablaAnalisis[Semaforo] = "No conviene" )
+		formatString: 0
+		lineageTag: 42b3b842-0a71-4d0e-be9e-c2eccb51913b
+
+	column Articulo
+		dataType: string
+		lineageTag: 66b6d1a7-8f46-4b32-94a9-84378fcafec1
+		summarizeBy: none
+		sourceColumn: Articulo
+
+		annotation SummarizationSetBy = Automatic
+
+	column Tipo
+		dataType: string
+		lineageTag: d43f3796-65be-4498-8a5e-2f8c9c47efd7
+		summarizeBy: none
+		sourceColumn: Tipo
+
+		annotation SummarizationSetBy = Automatic
+
+	column 'Costo Estimado'
+		dataType: double
+		formatString: 0
+		lineageTag: 30da188a-6cb4-4e49-8128-95353a34fcf4
+		summarizeBy: sum
+		sourceColumn: Costo Estimado
+
+		annotation SummarizationSetBy = Automatic
+
+	column Estado
+		dataType: string
+		lineageTag: d29f798a-2f3d-4df3-9c8c-d2287cc15931
+		summarizeBy: none
+		sourceColumn: Estado
+
+		annotation SummarizationSetBy = Automatic
+
+	column Notas
+		dataType: string
+		lineageTag: 6685ad5c-98a9-4a3f-a241-c97066cdb505
+		summarizeBy: none
+		sourceColumn: Notas
+
+		annotation SummarizationSetBy = Automatic
+
+	column Frecuencia
+		dataType: string
+		lineageTag: a5036a05-985b-4cc6-b2c1-94bef95995f2
+		summarizeBy: none
+		sourceColumn: Frecuencia
+
+		annotation SummarizationSetBy = Automatic
+
+	column Urgencia
+		dataType: int64
+		formatString: 0
+		lineageTag: 6d648f3a-67df-4baf-abc7-edbc38146252
+		summarizeBy: sum
+		sourceColumn: Urgencia
+
+		annotation SummarizationSetBy = Automatic
+
+	column Valor
+		dataType: int64
+		formatString: 0
+		lineageTag: 36f64ffc-1986-47ac-8917-9bef623d40e6
+		summarizeBy: sum
+		sourceColumn: Valor
+
+		annotation SummarizationSetBy = Automatic
+
+	column 'Fecha de alta'
+		dataType: dateTime
+		formatString: Long Date
+		lineageTag: 1811944e-7e24-4af4-8089-25ae73cd787a
+		summarizeBy: none
+		sourceColumn: Fecha de alta
+
+		variation Variation
+			isDefault
+			relationship: 703c32c4-e236-4aaa-961b-0d7ca5db38c9
+			defaultHierarchy: LocalDateTable_4d842607-4f8e-46ca-9972-0620aa7b38e7.'Jerarquía de fechas'
+
+		annotation SummarizationSetBy = Automatic
+
+		annotation UnderlyingDateTimeDataType = Date
+
+	column Puntaje
+		dataType: double
+		lineageTag: 10ef003e-6b4a-483b-bfd1-922d5ce766b1
+		summarizeBy: sum
+		sourceColumn: Puntaje
+
+		annotation SummarizationSetBy = Automatic
+
+		annotation PBI_FormatHint = {"isGeneralNumber":true}
+
+	column '% del Ingreso'
+		dataType: double
+		lineageTag: 38440705-52ac-4b46-be01-950e09ef01d4
+		summarizeBy: sum
+		sourceColumn: % del Ingreso
+
+		annotation SummarizationSetBy = Automatic
+
+		annotation PBI_FormatHint = {"isGeneralNumber":true}
+
+	column 'Impacto en Fondo %'
+		dataType: double
+		lineageTag: 99eef77a-2150-48ce-9a34-9539969218b9
+		summarizeBy: sum
+		sourceColumn: Impacto en Fondo %
+
+		annotation SummarizationSetBy = Automatic
+
+		annotation PBI_FormatHint = {"isGeneralNumber":true}
+
+	column 'Compromiso Mensual'
+		dataType: int64
+		formatString: 0
+		lineageTag: 6b20f23e-77fc-481b-8a2e-8c1d1376e708
+		summarizeBy: sum
+		sourceColumn: Compromiso Mensual
+
+		annotation SummarizationSetBy = Automatic
+
+	column 'Meses de Espera'
+		dataType: double
+		formatString: 0
+		lineageTag: 019cf3dd-8496-4278-9b94-a1560ccee64c
+		summarizeBy: none
+		sourceColumn: Meses de Espera
+
+		annotation SummarizationSetBy = User
+
+	column 'Fecha Estimada'
+		dataType: dateTime
+		formatString: Long Date
+		lineageTag: 2d7176c4-af65-48a6-9fbb-b6b8a7458556
+		summarizeBy: none
+		sourceColumn: Fecha Estimada
+
+		variation Variation
+			isDefault
+			relationship: b86b170a-1ba8-46d5-98ae-a7f5c99181be
+			defaultHierarchy: LocalDateTable_8d56b2a9-8d5f-4f6d-960e-bf622047482d.'Jerarquía de fechas'
+
+		annotation SummarizationSetBy = Automatic
+
+		annotation UnderlyingDateTimeDataType = Date
+
+	column Semaforo
+		dataType: string
+		lineageTag: 78963631-9808-4e16-817b-c99f74b085dd
+		summarizeBy: none
+		sourceColumn: Semaforo
+
+		annotation SummarizationSetBy = Automatic
+
+	column Motivo
+		dataType: string
+		lineageTag: b910fccb-9c5b-4432-8a0d-6a7158a9807d
+		summarizeBy: none
+		sourceColumn: Motivo
+
+		annotation SummarizationSetBy = Automatic
+
+	partition TablaAnalisis = m
+		mode: import
+		source =
+				let
+				  Source = Excel.Workbook(File.Contents("C:\Users\jdbr0\OneDrive\Desktop\Python practicas\powerbi\WishList_demo.xlsx"), null, true),
+				  #"Navigation 1" = Source{[Item = "TablaAnalisis", Kind = "Table"]}[Data],
+				  #"Changed column type" = Table.TransformColumnTypes(#"Navigation 1", {{"Articulo", type text}, {"Tipo", type text}, {"Costo Estimado", type number}, {"Estado", type text}, {"Frecuencia", type text}, {"Urgencia", Int64.Type}, {"Valor", Int64.Type}, {"Puntaje", type number}, {"% del Ingreso", type number}, {"Impacto en Fondo %", type number}, {"Compromiso Mensual", Int64.Type}, {"Meses de Espera", type number}, {"Fecha Estimada", type date}, {"Semaforo", type text}, {"Motivo", type text}, {"Notas", type text}, {"Fecha de alta", type date}}, "en-US")
+				in
+				  #"Changed column type"
+
+	annotation PBI_ResultType = Table
+

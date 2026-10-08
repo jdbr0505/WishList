@@ -1,0 +1,10 @@
+relationship 703c32c4-e236-4aaa-961b-0d7ca5db38c9
+	joinOnDateBehavior: datePartOnly
+	fromColumn: TablaAnalisis.'Fecha de alta'
+	toColumn: LocalDateTable_4d842607-4f8e-46ca-9972-0620aa7b38e7.Date
+
+relationship b86b170a-1ba8-46d5-98ae-a7f5c99181be
+	joinOnDateBehavior: datePartOnly
+	fromColumn: TablaAnalisis.'Fecha Estimada'
+	toColumn: LocalDateTable_8d56b2a9-8d5f-4f6d-960e-bf622047482d.Date
+

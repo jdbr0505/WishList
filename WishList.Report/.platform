@@ -1,0 +1,11 @@
+{
+  "$schema": "https://developer.microsoft.com/json-schemas/fabric/gitIntegration/platformProperties/2.0.0/schema.json",
+  "metadata": {
+    "type": "Report",
+    "displayName": "WishList"
+  },
+  "config": {
+    "version": "2.0",
+    "logicalId": "7d459424-1a5e-4f5a-844b-532c6f6771e0"
+  }
+}

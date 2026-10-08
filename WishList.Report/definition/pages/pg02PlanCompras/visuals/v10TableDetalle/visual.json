@@ -1,0 +1,368 @@
+{
+  "$schema": "https://developer.microsoft.com/json-schemas/fabric/item/report/definition/visualContainer/2.13.0/schema.json",
+  "name": "v10TableDetalle",
+  "position": {
+    "x": 320,
+    "y": 610,
+    "z": 4000,
+    "height": 420,
+    "width": 1560,
+    "tabOrder": 4000
+  },
+  "visual": {
+    "visualType": "tableEx",
+    "query": {
+      "queryState": {
+        "Values": {
+          "projections": [
+            {
+              "field": {
+                "Column": {
+                  "Expression": {
+                    "SourceRef": {
+                      "Entity": "TablaAnalisis"
+                    }
+                  },
+                  "Property": "Articulo"
+                }
+              },
+              "queryRef": "TablaAnalisis.Articulo",
+              "nativeQueryRef": "Articulo"
+            },
+            {
+              "field": {
+                "Column": {
+                  "Expression": {
+                    "SourceRef": {
+                      "Entity": "TablaAnalisis"
+                    }
+                  },
+                  "Property": "Tipo"
+                }
+              },
+              "queryRef": "TablaAnalisis.Tipo",
+              "nativeQueryRef": "Tipo"
+            },
+            {
+              "field": {
+                "Column": {
+                  "Expression": {
+                    "SourceRef": {
+                      "Entity": "TablaAnalisis"
+                    }
+                  },
+                  "Property": "Frecuencia"
+                }
+              },
+              "queryRef": "TablaAnalisis.Frecuencia",
+              "nativeQueryRef": "Frecuencia"
+            },
+            {
+              "field": {
+                "Aggregation": {
+                  "Expression": {
+                    "Column": {
+                      "Expression": {
+                        "SourceRef": {
+                          "Entity": "TablaAnalisis"
+                        }
+                      },
+                      "Property": "Costo Estimado"
+                    }
+                  },
+                  "Function": 0
+                }
+              },
+              "queryRef": "Sum(TablaAnalisis.Costo Estimado)",
+              "nativeQueryRef": "Costo",
+              "displayName": "Costo"
+            },
+            {
+              "field": {
+                "Column": {
+                  "Expression": {
+                    "SourceRef": {
+                      "Entity": "TablaAnalisis"
+                    }
+                  },
+                  "Property": "Puntaje"
+                }
+              },
+              "queryRef": "TablaAnalisis.Puntaje",
+              "nativeQueryRef": "Puntaje"
+            },
+            {
+              "field": {
+                "Column": {
+                  "Expression": {
+                    "SourceRef": {
+                      "Entity": "TablaAnalisis"
+                    }
+                  },
+                  "Property": "Meses de Espera"
+                }
+              },
+              "queryRef": "TablaAnalisis.Meses de Espera",
+              "nativeQueryRef": "Meses de Espera"
+            },
+            {
+              "field": {
+                "Column": {
+                  "Expression": {
+                    "SourceRef": {
+                      "Entity": "TablaAnalisis"
+                    }
+                  },
+                  "Property": "Fecha Estimada"
+                }
+              },
+              "queryRef": "TablaAnalisis.Fecha Estimada",
+              "nativeQueryRef": "Fecha Estimada"
+            },
+            {
+              "field": {
+                "Column": {
+                  "Expression": {
+                    "SourceRef": {
+                      "Entity": "TablaAnalisis"
+                    }
+                  },
+                  "Property": "Semaforo"
+                }
+              },
+              "queryRef": "TablaAnalisis.Semaforo",
+              "nativeQueryRef": "Semaforo"
+            },
+            {
+              "field": {
+                "Column": {
+                  "Expression": {
+                    "SourceRef": {
+                      "Entity": "TablaAnalisis"
+                    }
+                  },
+                  "Property": "Motivo"
+                }
+              },
+              "queryRef": "TablaAnalisis.Motivo",
+              "nativeQueryRef": "Motivo"
+            }
+          ]
+        }
+      },
+      "sortDefinition": {
+        "sort": [
+          {
+            "field": {
+              "Column": {
+                "Expression": {
+                  "SourceRef": {
+                    "Entity": "TablaAnalisis"
+                  }
+                },
+                "Property": "Puntaje"
+              }
+            },
+            "direction": "Descending"
+          }
+        ]
+      }
+    },
+    "objects": {
+      "values": [
+        {
+          "properties": {
+            "fontSize": {
+              "expr": {
+                "Literal": {
+                  "Value": "14D"
+                }
+              }
+            }
+          }
+        },
+        {
+          "properties": {
+            "backColor": {
+              "solid": {
+                "color": {
+                  "expr": {
+                    "Measure": {
+                      "Expression": {
+                        "SourceRef": {
+                          "Entity": "Categorias"
+                        }
+                      },
+                      "Property": "Color Semaforo"
+                    }
+                  }
+                }
+              }
+            },
+            "fontColor": {
+              "solid": {
+                "color": {
+                  "expr": {
+                    "Literal": {
+                      "Value": "'#1A1A1A'"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "selector": {
+            "data": [
+              {
+                "dataViewWildcard": {
+                  "matchingOption": 1
+                }
+              }
+            ],
+            "metadata": "TablaAnalisis.Semaforo"
+          }
+        }
+      ],
+      "columnHeaders": [
+        {
+          "properties": {
+            "fontSize": {
+              "expr": {
+                "Literal": {
+                  "Value": "14D"
+                }
+              }
+            },
+            "alignment": {
+              "expr": {
+                "Literal": {
+                  "Value": "'Left'"
+                }
+              }
+            }
+          }
+        }
+      ],
+      "total": [
+        {
+          "properties": {
+            "totals": {
+              "expr": {
+                "Literal": {
+                  "Value": "false"
+                }
+              }
+            }
+          }
+        }
+      ]
+    },
+    "visualContainerObjects": {
+      "title": [
+        {
+          "properties": {
+            "show": {
+              "expr": {
+                "Literal": {
+                  "Value": "true"
+                }
+              }
+            },
+            "text": {
+              "expr": {
+                "Literal": {
+                  "Value": "'Detalle por prioridad'"
+                }
+              }
+            },
+            "fontSize": {
+              "expr": {
+                "Literal": {
+                  "Value": "18D"
+                }
+              }
+            }
+          }
+        }
+      ]
+    },
+    "drillFilterOtherVisuals": true
+  },
+  "filterConfig": {
+    "filters": [
+      {
+        "name": "0a892e41e2a02d8a6771",
+        "field": {
+          "Column": {
+            "Expression": {
+              "SourceRef": {
+                "Entity": "TablaAnalisis"
+              }
+            },
+            "Property": "Semaforo"
+          }
+        },
+        "type": "Categorical",
+        "filter": {
+          "Version": 2,
+          "From": [
+            {
+              "Name": "t",
+              "Entity": "TablaAnalisis",
+              "Type": 0
+            }
+          ],
+          "Where": [
+            {
+              "Condition": {
+                "Not": {
+                  "Expression": {
+                    "In": {
+                      "Expressions": [
+                        {
+                          "Column": {
+                            "Expression": {
+                              "SourceRef": {
+                                "Source": "t"
+                              }
+                            },
+                            "Property": "Semaforo"
+                          }
+                        }
+                      ],
+                      "Values": [
+                        [
+                          {
+                            "Literal": {
+                              "Value": "'Comprado'"
+                            }
+                          }
+                        ]
+                      ]
+                    }
+                  }
+                }
+              }
+            }
+          ]
+        },
+        "howCreated": "User",
+        "objects": {
+          "general": [
+            {
+              "properties": {
+                "isInvertedSelectionMode": {
+                  "expr": {
+                    "Literal": {
+                      "Value": "true"
+                    }
+                  }
+                }
+              }
+            }
+          ]
+        }
+      }
+    ]
+  }
+}

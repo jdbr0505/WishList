@@ -1,0 +1,24 @@
+model Model
+	culture: es-ES
+	defaultPowerBIDataSourceVersion: powerBI_V3
+	sourceQueryCulture: es-ES
+	valueFilterBehavior: independent
+	dataAccessOptions
+		legacyRedirects
+		returnErrorValuesAsNull
+
+annotation __PBI_TimeIntelligenceEnabled = 1
+
+annotation PBI_QueryOrder = ["TablaPerfil","TablaAnalisis","Categorias"]
+
+annotation PBI_ProTooling = ["DevMode"]
+
+ref table TablaPerfil
+ref table TablaAnalisis
+ref table DateTableTemplate_440941a1-ee25-45f4-88f5-1c246e3e85a9
+ref table LocalDateTable_4d842607-4f8e-46ca-9972-0620aa7b38e7
+ref table LocalDateTable_8d56b2a9-8d5f-4f6d-960e-bf622047482d
+ref table Categorias
+
+ref cultureInfo es-ES
+

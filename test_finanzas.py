@@ -5,7 +5,7 @@ import pytest
 
 from datos_excel import COLUMNAS_PERFIL, normalizar_wishlist
 from finanzas import (
-  Perfil, analizar_wishlist, compromiso_mensual, decidir, deseos_disponibles,
+  Perfil, agregar_analisis, analizar_wishlist, compromiso_mensual, decidir, deseos_disponibles,
   fecha_estimada, fondo_completo, margen_necesidades, perfil_desde_hoja,
   porcentaje_del_ingreso, presupuesto_503020, puntaje_prioridad,
 )
@@ -161,6 +161,30 @@ def test_comprado_y_sin_clasificar_y_sin_perfil():
   assert analizar_wishlist(lista, PERFIL, HOY)["Semaforo"].tolist() == ["Comprado", "Clasificar"]
   sin_perfil = _lista([("X", "Deseo", 50, "Pendiente", 3, 3)])
   assert analizar_wishlist(sin_perfil, Perfil(), HOY)["Semaforo"].iloc[0] == "Falta perfil"
+
+
+def test_agregar_analisis_suma_una_hoja_y_cambia_infinitos_por_vacio(tmp_path):
+  perfil = pd.DataFrame([[1000.0, 400.0, 300.0, 1200.0, 3.0]], columns=COLUMNAS_PERFIL)  # sin presupuesto de deseos
+  hojas = {"WishList": _lista([("Teclado", "Deseo", 100, "Pendiente", 5, 5)]), "Perfil": perfil}
+
+  con_analisis = agregar_analisis(hojas)
+
+  assert list(con_analisis) == ["WishList", "Perfil", "Analisis"]
+  assert pd.isna(con_analisis["Analisis"]["Meses de Espera"].iloc[0])  # era infinito
+  assert "Analisis" not in hojas  # no modifica el diccionario original
+
+
+def test_el_excel_con_analisis_tiene_tres_tablas(tmp_path):
+  import openpyxl
+  from datos_demo import hojas_demo
+  from datos_excel import guardar_excel
+
+  ruta = tmp_path / "demo.xlsx"
+  guardar_excel(agregar_analisis(hojas_demo()), ruta)
+
+  libro = openpyxl.load_workbook(ruta)
+  assert libro.sheetnames == ["WishList", "Perfil", "Analisis"]
+  assert set(dict(libro["Analisis"].tables.items())) == {"TablaAnalisis"}
 
 
 def test_analizar_no_modifica_la_wishlist_original():

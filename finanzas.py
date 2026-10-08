@@ -197,6 +197,17 @@ def decidir(tipo, estado, costo, meses: float, perfil: Perfil, fondo_ok: bool) -
   return Decision("No conviene", f"Tardaria {int(meses)} meses (mas de {MESES_MAXIMO_ESPERA}).")
 
 
+def agregar_analisis(hojas: dict[str, pd.DataFrame]) -> dict[str, pd.DataFrame]:
+  """Devuelve las hojas mas una hoja "Analisis" con las columnas calculadas.
+
+  Asi Excel y Power BI leen el mismo semaforo que la app, sin repetir la logica.
+  Excel no guarda infinito, por eso "sin presupuesto" queda como celda vacia.
+  """
+  perfil = perfil_desde_hoja(hojas["Perfil"])
+  analisis = analizar_wishlist(hojas["WishList"], perfil).replace(math.inf, math.nan)
+  return {**hojas, "Analisis": analisis}
+
+
 def analizar_wishlist(wishlist: pd.DataFrame, perfil: Perfil, hoy: pd.Timestamp | None = None) -> pd.DataFrame:
   """Devuelve una copia de la WishList con las columnas calculadas (no modifica la original)."""
   hoy = hoy if hoy is not None else pd.Timestamp.today().normalize()

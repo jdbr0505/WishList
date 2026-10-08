@@ -1,0 +1,88 @@
+table Categorias
+	lineageTag: f84594a2-f87c-44a9-8312-a84170d6189d
+
+	measure 'Meta %' =
+			
+			SELECTEDVALUE ( Categorias[Meta] )
+		formatString: 0.00\ %;-0.00\ %;0.00\ %
+		lineageTag: 54084f2b-2c82-4921-ada9-bb6c762eea02
+
+	measure Medida
+		lineageTag: 4680ae39-c67e-443c-877c-8008ae648f78
+
+		annotation 43dbc3e8-3a1c-4b6f-9923-b49ff7d6691c = True
+
+	measure 'Deseos Real %' =
+			
+			DIVIDE ( MAX ( TablaPerfil[Deseos ya gastados] ), [Ingreso Mensual] )
+		lineageTag: 532bfc14-889a-4dc1-bd27-5296d28fa7d4
+
+		annotation PBI_FormatHint = {"isGeneralNumber":true}
+
+	measure 'Ahorro Real %' =
+			
+			1 - [Necesidades Real %] - [Deseos Real %]
+		lineageTag: 50dc5f63-10b6-4fe5-bf0f-dce606da2357
+
+		annotation PBI_FormatHint = {"isGeneralNumber":true}
+
+	measure 'Real %' =
+			
+			SWITCH (
+			    SELECTEDVALUE ( Categorias[Categoria] ),
+			    "Necesidades", [Necesidades Real %],
+			    "Deseos", [Deseos Real %],
+			    "Ahorro", [Ahorro Real %]
+			)
+		formatString: 0.00\ %;-0.00\ %;0.00\ %
+		lineageTag: d94f537d-d4de-40ca-b10d-893d35c1f8a1
+
+	measure 'Color Semaforo' =
+			
+			SWITCH (
+			    SELECTEDVALUE ( TablaAnalisis[Semaforo] ),
+			    "Comprar ya", "#2e9e5b",
+			    "Esperar", "#e0a800",
+			    "No conviene", "#d64545",
+			    "#8a8f98"
+			)
+		lineageTag: 34794a14-5bd8-4e1a-a935-bfec80c5b25b
+
+	column Categoria
+		dataType: string
+		lineageTag: b8f2e2f1-c7bf-4b18-9d41-f4217f83cbe1
+		summarizeBy: none
+		sourceColumn: Categoria
+
+		annotation SummarizationSetBy = Automatic
+
+	column Meta
+		dataType: double
+		lineageTag: f3dea05b-994a-4c12-ad8f-ed9206f62343
+		summarizeBy: sum
+		sourceColumn: Meta
+
+		annotation SummarizationSetBy = Automatic
+
+		annotation PBI_FormatHint = {"isGeneralNumber":true}
+
+	column Orden
+		dataType: int64
+		formatString: 0
+		lineageTag: 2f4ada28-bcf4-4a11-b80a-abf89ab42e5f
+		summarizeBy: sum
+		sourceColumn: Orden
+
+		annotation SummarizationSetBy = Automatic
+
+	partition Categorias = m
+		mode: import
+		source =
+				let
+				  Origen = Table.FromRows(Json.Document(Binary.Decompress(Binary.FromText("i45W8ktNTi3OTElMSS1W0lEy0DEFkoZKsTrRSi6pxan5EEFjIGkEFnTMyC8qygcLGgFJY6XYWAA=", BinaryEncoding.Base64), Compression.Deflate)), let _t = ((type nullable text) meta [Serialized.Text = true]) in type table [Categoria = _t, Meta = _t, Orden = _t]),
+				  #"Tipo de columna cambiado" = Table.TransformColumnTypes(Origen, {{"Categoria", type text}, {"Meta", Percentage.Type}, {"Orden", Int64.Type}}, "es")
+				in
+				  #"Tipo de columna cambiado"
+
+	annotation PBI_ResultType = Table
+

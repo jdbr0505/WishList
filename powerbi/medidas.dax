@@ -1,0 +1,94 @@
+// Medidas DAX para el reporte de WishList.
+// Tablas del modelo: TablaAnalisis y TablaPerfil (las crea la app en el Excel).
+// Cómo usarlas: en Power BI Desktop, pestaña Inicio > Nueva medida, y pegá una por una.
+// Los resultados indicados salen de WishList_demo.xlsx (calculados con pandas, no ejecutados en Power BI).
+
+// ---------- Nivel 1: conteos y sumas ----------
+
+Costo Total =
+SUM ( TablaAnalisis[Costo Estimado] )
+
+Articulos =
+COUNTROWS ( TablaAnalisis )
+
+// Demo: 12
+Articulos Pendientes =
+CALCULATE (
+    COUNTROWS ( TablaAnalisis ),
+    TablaAnalisis[Semaforo] <> "Comprado"
+)
+
+// Demo: 3847
+Total Pendiente =
+CALCULATE (
+    SUM ( TablaAnalisis[Costo Estimado] ),
+    TablaAnalisis[Semaforo] <> "Comprado"
+)
+
+// Demo: 2
+Por Cotizar =
+CALCULATE (
+    COUNTROWS ( TablaAnalisis ),
+    TablaAnalisis[Semaforo] = "Por cotizar"
+)
+
+// ---------- Nivel 2: contexto de filtro y divisiones seguras ----------
+
+// Demo: 1500
+Ingreso Mensual =
+MAX ( TablaPerfil[Ingreso Neto Mensual] )
+
+// Formato: porcentaje. Demo: 256%. DIVIDE evita el error de dividir entre cero.
+% de un Mes de Ingreso =
+DIVIDE ( [Total Pendiente], [Ingreso Mensual] )
+
+// Participación de cada semáforo en el costo total. ALL quita el filtro del semáforo para el denominador.
+% del Costo =
+DIVIDE (
+    [Costo Total],
+    CALCULATE ( [Costo Total], ALL ( TablaAnalisis[Semaforo] ) )
+)
+
+// Demo: Comprar ya 3, Esperar 6, No conviene 1
+Comprar Ya =
+CALCULATE ( COUNTROWS ( TablaAnalisis ), TablaAnalisis[Semaforo] = "Comprar ya" )
+
+Esperar =
+CALCULATE ( COUNTROWS ( TablaAnalisis ), TablaAnalisis[Semaforo] = "Esperar" )
+
+No Conviene =
+CALCULATE ( COUNTROWS ( TablaAnalisis ), TablaAnalisis[Semaforo] = "No conviene" )
+
+Puntaje Promedio =
+AVERAGE ( TablaAnalisis[Puntaje] )
+
+// Demo: 10 (la guitarra)
+Plazo Maximo (meses) =
+CALCULATE (
+    MAX ( TablaAnalisis[Meses de Espera] ),
+    TablaAnalisis[Semaforo] <> "Comprado"
+)
+
+// ---------- Nivel 3: regla 50/30/20 real contra meta ----------
+
+// Demo: 43.3%
+Necesidades Real % =
+DIVIDE ( MAX ( TablaPerfil[Gastos fijos] ), [Ingreso Mensual] )
+
+// Demo: 8%
+Deseos Real % =
+DIVIDE ( MAX ( TablaPerfil[Deseos ya gastados] ), [Ingreso Mensual] )
+
+// Demo: 48.7%
+Ahorro Real % =
+1 - [Necesidades Real %] - [Deseos Real %]
+
+// Color del semáforo para formato condicional (mismos colores que la app)
+Color Semaforo =
+SWITCH (
+    SELECTEDVALUE ( TablaAnalisis[Semaforo] ),
+    "Comprar ya", "#2e9e5b",
+    "Esperar", "#e0a800",
+    "No conviene", "#d64545",
+    "#8a8f98"
+)
