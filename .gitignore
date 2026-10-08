@@ -1,2 +1,7 @@
 **/.pbi/localSettings.json
 **/.pbi/cache.abf
+
+# Python: archivos que genera el propio Python al ejecutar (se recrean solos)
+__pycache__/
+*.pyc
+.pytest_cache/
