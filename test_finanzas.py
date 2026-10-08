@@ -106,6 +106,16 @@ def test_deseo_con_fondo_incompleto_espera():
   assert analizar_wishlist(lista, perfil, HOY)["Semaforo"].iloc[0] == "Esperar"
 
 
+def test_deseo_a_mas_de_seis_meses_con_fondo_incompleto_no_conviene_y_lo_dice():
+  perfil = Perfil(ingreso=1000, gastos_fijos=400, deseos_gastados=0, ahorro_actual=100, meses_fondo_objetivo=3)
+  lista = _lista([("Telefono", "Deseo", 9000, "Pendiente", 5, 5)])
+
+  resultado = analizar_wishlist(lista, perfil, HOY)
+
+  assert resultado["Semaforo"].iloc[0] == "No conviene"
+  assert "fondo de emergencia" in resultado["Motivo"].iloc[0]
+
+
 def test_necesidad_ignora_el_fondo_incompleto():
   perfil = Perfil(ingreso=1000, gastos_fijos=400, ahorro_actual=100, meses_fondo_objetivo=3)
   lista = _lista([("Medias", "Necesidad", 50, "Pendiente", 5, 5)])

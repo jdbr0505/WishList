@@ -34,6 +34,7 @@ python -m pytest
 - **Cada hoja con datos es una Tabla de Excel** (`TablaWishList`, `TablaPerfil`, `TablaAnalisis`), recreada en cada guardado. Una hoja sin filas queda como rango.
 - **Tipo vacío pasa a "Sin clasificar" y Estado vacío a "Pendiente"** al cargar (decisión de Claude, se puede cambiar).
 - **Un gasto fuera de alcance** (que, solo, tardaría más de 6 meses) no bloquea la fila de espera de los gastos pequeños.
+- **Moneda: dólares (USD).** Todos los montos están en dólares. Los nombres de columna no cambian (así no se rompen el Excel ni Power BI): en la app se muestran como `$50.00` y en el Excel con formato de dólares. En Power BI hay que darle formato de moneda a las medidas (ver `powerbi/GUIA_POWER_BI.md`).
 - **Sin CSS ni HTML propios.** Streamlit genera la interfaz.
 - **Indentación:** una sola en todo el archivo (hoy 2 espacios). Mezclar niveles causó errores en la Fase 0.
 - **Power BI:** el proyecto es `WishList.pbip` (carpetas `WishList.Report` y `WishList.SemanticModel`). Hoy lee `powerbi/WishList_demo.xlsx`. Un `.pbip` no se crea desde cero: lo guarda Power BI Desktop. Claude no puede ver Desktop, así que la verificación visual es mía.
@@ -185,10 +186,12 @@ El semáforo evalúa estas reglas en orden y se queda con la primera que se cump
 3. **Clasificar:** el tipo no es Deseo ni Necesidad.
 4. **Falta perfil:** el ingreso mensual es 0.
 5. **No conviene:** no queda presupuesto mensual para ese tipo de gasto.
-6. **Esperar:** es un deseo y el fondo de emergencia no está completo.
-7. **Comprar ya:** cabe en este mes (meses menor o igual que 1).
-8. **Esperar:** alcanza en 6 meses o menos.
-9. **No conviene:** tardaría más de 6 meses.
+6. **No conviene:** tardaría más de 6 meses. Si además es un deseo y el fondo no está completo, el motivo lo dice.
+7. **Esperar:** es un deseo y el fondo de emergencia no está completo.
+8. **Comprar ya:** cabe en este mes (meses menor o igual que 1).
+9. **Esperar:** alcanza en 6 meses o menos.
+
+Cambio de orden (2026-10-08): el plazo largo (regla 6) pasa antes que el fondo (regla 7). Antes, un deseo que tardaba 22 meses decía "Esperar por el fondo"; ahora dice "No conviene", que es más honesto.
 
 Pesos del puntaje de prioridad (0 a 100): urgencia 45%, valor percibido 30%, es una necesidad 25%. La urgencia pesa más porque un artículo que ya hace falta debe ir antes. El costo no entra en el puntaje: el puntaje mide importancia y el costo lo resuelve el semáforo. Los pesos y el máximo de 6 meses son constantes en `finanzas.py`, fáciles de cambiar.
 

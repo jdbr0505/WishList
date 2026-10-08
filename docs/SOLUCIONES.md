@@ -197,13 +197,13 @@ condiciones = [
     a["Costo Estimado"].isna() | (a["Costo Estimado"] <= 0),
     ~a["Tipo"].isin(["Deseo", "Necesidad"]),
     np.isinf(a["Meses de Espera"]),
+    a["Meses de Espera"] > 6,
     (a["Tipo"] == "Deseo") & (not fondo_ok),
     a["Meses de Espera"] <= 1,
-    a["Meses de Espera"] <= 6,
 ]
-resultados = ["Comprado", "Por cotizar", "Clasificar", "No conviene", "Esperar", "Comprar ya", "Esperar"]
+resultados = ["Comprado", "Por cotizar", "Clasificar", "No conviene", "No conviene", "Esperar", "Comprar ya"]
 
-mio = np.select(condiciones, resultados, default="No conviene")
+mio = np.select(condiciones, resultados, default="Esperar")
 print((mio == a["Semaforo"].to_numpy()).all())   # True
 ```
 El orden importa: `np.select` toma la primera condición verdadera, igual que la función `decidir`. Lo que no puede hacer `np.select` de forma cómoda es el Motivo con texto variable ("Alcanza en 3 meses"), por eso el sistema usa una función con reglas en orden.

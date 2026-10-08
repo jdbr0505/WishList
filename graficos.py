@@ -107,5 +107,5 @@ def grafico_plan_de_compras(analisis: pd.DataFrame, perfil: Perfil) -> go.Figure
   figura.update_xaxes(title="Meses desde hoy", range=[0, MESES_MAXIMO_ESPERA + 1])
   # el eje Y se ajusta a las compras (la linea de presupuesto sigue sin tope y se sale del cuadro)
   tope_y = max(acumulados) * 1.3 if acumulados else None
-  figura.update_yaxes(title="Costo acumulado", range=[0, tope_y] if tope_y else None)
+  figura.update_yaxes(title="Costo acumulado (USD)", range=[0, tope_y] if tope_y else None, tickprefix="$")
   return _base(figura, "Plan de compras: costo acumulado contra presupuesto")

@@ -45,7 +45,8 @@ El archivo se reescribe completo en cada guardado. Los datos de las celdas se co
    - Necesidades disponibles = 50% del ingreso menos los gastos fijos.
 2. **Puntaje de prioridad (0 a 100):** urgencia 45%, valor percibido 30%, ser necesidad 25%.
 3. **Fila de espera:** dentro de cada tipo, los artículos pendientes con precio se ordenan por puntaje y se acumula el costo. Meses = costo acumulado dividido el presupuesto, redondeado hacia arriba.
-4. **Semáforo:** Comprado, Por cotizar, Clasificar, Falta perfil, No conviene (sin presupuesto), Esperar (fondo incompleto), Comprar ya (mes 1), Esperar (hasta 6 meses) o No conviene (más de 6).
+4. **Semáforo:** Comprado, Por cotizar, Clasificar, Falta perfil, No conviene (sin presupuesto), No conviene (más de 6 meses), Esperar (deseo con fondo de emergencia incompleto), Comprar ya (mes 1) o Esperar (hasta 6 meses). Se evalúan en ese orden y gana la primera que se cumple.
+5. **Moneda:** todos los montos están en dólares (USD). Los nombres de columna no cambian; en pantalla se muestran con `$` y en el Excel con formato de dólares.
 
 El detalle está en la sección "Reglas de decisión" del ROADMAP.
 

@@ -4,7 +4,7 @@ import pandas as pd
 import streamlit as st
 
 from datos_excel import (
-  COLUMNAS_PERFIL, ESTADOS, FRECUENCIAS, TIPOS, TIPOS_VALIDOS,
+  COLUMNAS_DINERO, COLUMNAS_PERFIL, ESTADOS, FRECUENCIAS, MONEDA, TIPOS, TIPOS_VALIDOS,
   cargar_datos, excel_en_bytes, filtrar_tabla, guardar_excel, preparar_edicion,
 )
 from datos_demo import hojas_demo
@@ -37,7 +37,17 @@ st.set_page_config(
 )
 
 st.title("📝 WishList")
-st.markdown("Sistema para organizar tus compras y prioridades")
+st.markdown(f"Sistema para organizar tus compras y prioridades · todos los montos en dólares ({MONEDA})")
+
+# las columnas de dinero se muestran con el simbolo $ en todas las tablas (el valor no cambia)
+# formato fijo "$50.00" (el preset "dollar" cambia segun el idioma del navegador y mostraba "50,00 $")
+FORMATO_DINERO = "$%.2f"
+CONFIG_DINERO = {nombre: st.column_config.NumberColumn(nombre, format=FORMATO_DINERO) for nombre in COLUMNAS_DINERO}
+
+
+def dinero(valor):
+  """Da formato de dolares a un monto para mostrarlo, por ejemplo $1,250."""
+  return f"${valor:,.0f}"
 
 
 def guardar(hojas_a_guardar):
@@ -90,7 +100,7 @@ with tab_articulos:
       urgencia = st.slider("Urgencia (1 = puede esperar, 5 = ya)", 1, 5, 3)
     with col2:
       # value=None deja el campo vacio: vacio significa "por cotizar" (nunca se guarda 0)
-      costo_estimado = st.number_input("Costo Estimado (vacío = por cotizar)", value=None, min_value=0.0)
+      costo_estimado = st.number_input(f"Costo Estimado ({MONEDA}, vacío = por cotizar)", value=None, min_value=0.0)
       estado = st.selectbox("Estado", ESTADOS)
       valor = st.slider("Valor percibido (1 = poco, 5 = mucho)", 1, 5, 3)
       notas = st.text_area("Notas")
@@ -143,7 +153,7 @@ with tab_articulos:
 
   df_filtrado = filtrar_tabla(df, {"Tipo": tipos_elegidos, "Estado": estados_elegidos}, buscar)
   st.caption(f"Mostrando {len(df_filtrado)} de {len(df)} artículos")
-  st.dataframe(df_filtrado, width="stretch")
+  st.dataframe(df_filtrado, width="stretch", column_config=CONFIG_DINERO)
 
 with tab_editar:
   st.subheader("Editar lista")
@@ -167,7 +177,9 @@ with tab_editar:
     column_config={
       "Articulo": st.column_config.TextColumn("Articulo", required=True, max_chars=100),
       "Tipo": st.column_config.SelectboxColumn("Tipo", options=TIPOS_VALIDOS),
-      "Costo Estimado": st.column_config.NumberColumn("Costo Estimado", min_value=0.0, help="Vacío = por cotizar"),
+      "Costo Estimado": st.column_config.NumberColumn(
+        "Costo Estimado", min_value=0.0, format=FORMATO_DINERO, help=f"En dólares ({MONEDA}). Vacío = por cotizar"
+      ),
       "Estado": st.column_config.SelectboxColumn("Estado", options=ESTADOS),
       "Frecuencia": st.column_config.SelectboxColumn("Frecuencia", options=FRECUENCIAS),
       "Urgencia": st.column_config.NumberColumn("Urgencia", min_value=1, max_value=5, step=1),
@@ -204,7 +216,11 @@ with tab_perfil:
 
   with st.form("perfil_form"):
     valores = {
-        columna: st.number_input(columna, min_value=0.0, value=valor_inicial(fila_actual, columna))
+        columna: st.number_input(
+            f"{columna} ({MONEDA})" if columna in COLUMNAS_DINERO else columna,
+            min_value=0.0,
+            value=valor_inicial(fila_actual, columna),
+        )
         for columna in COLUMNAS_PERFIL
     }
     guardar_perfil = st.form_submit_button(label="Guardar perfil", width="stretch")
@@ -216,7 +232,7 @@ with tab_perfil:
       st.success("Perfil guardado.")
       perfil = pd.DataFrame([valores])
 
-  st.dataframe(perfil, width="stretch")
+  st.dataframe(perfil, width="stretch", column_config=CONFIG_DINERO)
 
 # se calcula al final para usar el df y el perfil ya actualizados en esta ejecucion
 with tab_analisis:
@@ -227,9 +243,9 @@ with tab_analisis:
   else:
     presupuesto = presupuesto_503020(perfil_actual.ingreso)
     col_a, col_b, col_c = st.columns(3)
-    col_a.metric("Necesidades (50%)", f"{presupuesto['Necesidades']:,.0f}", f"quedan {margen_necesidades(perfil_actual):,.0f}")
-    col_b.metric("Deseos (30%)", f"{presupuesto['Deseos']:,.0f}", f"quedan {deseos_disponibles(perfil_actual):,.0f}")
-    col_c.metric("Ahorro (20%)", f"{presupuesto['Ahorro']:,.0f}")
+    col_a.metric("Necesidades (50%)", dinero(presupuesto["Necesidades"]), f"quedan {dinero(margen_necesidades(perfil_actual))}")
+    col_b.metric("Deseos (30%)", dinero(presupuesto["Deseos"]), f"quedan {dinero(deseos_disponibles(perfil_actual))}")
+    col_c.metric("Ahorro (20%)", dinero(presupuesto["Ahorro"]))
 
     cubiertos = meses_fondo_cubiertos(perfil_actual)
     if fondo_completo(perfil_actual):
@@ -257,7 +273,7 @@ with tab_analisis:
     Semaforo=analisis_filtrado["Semaforo"].map(ICONOS_SEMAFORO),
     **{"Meses de Espera": analisis_filtrado["Meses de Espera"].replace(float("inf"), float("nan"))},
   )
-  st.dataframe(vista, width="stretch", hide_index=True)
+  st.dataframe(vista, width="stretch", hide_index=True, column_config=CONFIG_DINERO)
 
 with tab_dashboard:
   if not perfil_actual.completo:
@@ -269,7 +285,7 @@ with tab_dashboard:
     plazos = pendientes["Meses de Espera"].replace(float("inf"), float("nan")).dropna()
 
     k1, k2, k3, k4 = st.columns(4)
-    k1.metric("Pendiente (con precio)", f"{total_pendiente:,.0f}")
+    k1.metric("Pendiente (con precio)", dinero(total_pendiente))
     k2.metric("% de un mes de ingreso", f"{total_pendiente / perfil_actual.ingreso * 100:.0f}%")
     k3.metric("Plazo para cumplir la lista", f"{int(plazos.max())} meses" if not plazos.empty else "—")
     k4.metric("Por cotizar", int((analisis["Semaforo"] == "Por cotizar").sum()))

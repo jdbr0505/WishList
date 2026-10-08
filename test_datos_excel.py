@@ -185,6 +185,23 @@ def test_excel_en_bytes_genera_un_libro_valido_con_las_tablas():
   assert pd.read_excel(BytesIO(contenido))["Articulo"].tolist() == ["Medias", "Mouse", "Pedalera"]
 
 
+def test_el_excel_muestra_los_montos_en_dolares_sin_cambiar_los_valores(tmp_path):
+  ruta = tmp_path / "usd.xlsx"
+  perfil = pd.DataFrame([[1000.0, 400.0, 100.0, 500.0, 3.0]], columns=COLUMNAS_PERFIL)
+  guardar_excel({"WishList": _lista_normalizada(), "Perfil": perfil}, ruta)
+
+  import openpyxl
+  libro = openpyxl.load_workbook(ruta)
+  hoja = libro["WishList"]
+  columnas = {celda.value: celda.column_letter for celda in hoja[1]}
+
+  assert hoja[f"{columnas['Costo Estimado']}2"].number_format == '"$"#,##0.00'
+  assert hoja[f"{columnas['Urgencia']}2"].number_format != '"$"#,##0.00'      # no es dinero
+  assert libro["Perfil"]["A2"].number_format == '"$"#,##0.00'               # ingreso
+  assert libro["Perfil"]["E2"].number_format != '"$"#,##0.00'               # meses de fondo
+  assert hoja[f"{columnas['Costo Estimado']}2"].value == 30.0
+
+
 def test_guardar_y_cargar_conserva_ambas_hojas_con_una_tabla_cada_una(tmp_path):
   ruta = tmp_path / "prueba.xlsx"
   perfil = pd.DataFrame([[1000.0, 400.0, 100.0, 500.0, 3.0]], columns=COLUMNAS_PERFIL)

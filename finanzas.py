@@ -188,13 +188,17 @@ def decidir(tipo, estado, costo, meses: float, perfil: Perfil, fondo_ok: bool) -
     return Decision("Falta perfil", "Completa tu perfil financiero (ingreso mensual).")
   if math.isinf(meses):
     return Decision("No conviene", "No tienes presupuesto mensual disponible para este tipo de gasto.")
+  # el plazo largo va antes que el fondo: un gasto a mas de 6 meses no "espera", no conviene por ahora
+  if meses > MESES_MAXIMO_ESPERA:
+    motivo = f"Tardaria {int(meses)} meses (mas de {MESES_MAXIMO_ESPERA})."
+    if tipo == "Deseo" and not fondo_ok:
+      motivo += " Ademas, tu fondo de emergencia esta incompleto."
+    return Decision("No conviene", motivo)
   if tipo == "Deseo" and not fondo_ok:
     return Decision("Esperar", "Primero completa tu fondo de emergencia.")
   if meses <= 1:
     return Decision("Comprar ya", "Cabe en el presupuesto de este mes.")
-  if meses <= MESES_MAXIMO_ESPERA:
-    return Decision("Esperar", f"Alcanza en {int(meses)} meses con tu presupuesto.")
-  return Decision("No conviene", f"Tardaria {int(meses)} meses (mas de {MESES_MAXIMO_ESPERA}).")
+  return Decision("Esperar", f"Alcanza en {int(meses)} meses con tu presupuesto.")
 
 
 def agregar_analisis(hojas: dict[str, pd.DataFrame]) -> dict[str, pd.DataFrame]:

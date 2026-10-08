@@ -17,6 +17,14 @@ COLUMNAS_PERFIL = [
   "Ahorro actual", "Meses de Fondo de emergencia objetivo",
 ]
 
+# Todos los montos estan en dolares (USD). Los nombres de columna no cambian: solo se muestra el simbolo.
+MONEDA = "USD"
+COLUMNAS_DINERO = {
+  "Costo Estimado", "Compromiso Mensual",
+  "Ingreso Neto Mensual", "Gastos fijos", "Deseos ya gastados", "Ahorro actual",
+}
+FORMATO_DINERO_EXCEL = '"$"#,##0.00'
+
 TIPOS = ["Deseo", "Necesidad"]
 TIPOS_VALIDOS = TIPOS + ["Sin clasificar"]  # "Sin clasificar" es el valor por defecto de los datos viejos
 ESTADOS = ["Pendiente", "Comprado"]
@@ -193,6 +201,14 @@ def agregar_tabla(hoja, datos, nombre):
   hoja.add_table(tabla)
 
 
+def aplicar_formato_dinero(hoja):
+  """Muestra en dolares (USD) las columnas de dinero de la hoja. Solo cambia el formato, no el valor."""
+  for celda_cabecera in hoja[1]:
+    if celda_cabecera.value in COLUMNAS_DINERO:
+      for fila in hoja.iter_rows(min_row=2, min_col=celda_cabecera.column, max_col=celda_cabecera.column):
+        fila[0].number_format = FORMATO_DINERO_EXCEL
+
+
 def filtrar_tabla(datos, filtros=None, texto="", columna_texto="Articulo"):
   """Devuelve las filas que cumplen los filtros, sin modificar la tabla original.
 
@@ -223,6 +239,8 @@ def guardar_excel(hojas, ruta):
   with pd.ExcelWriter(ruta, engine="openpyxl") as writer:
     for nombre_hoja, datos in hojas.items():
       datos.to_excel(writer, sheet_name=nombre_hoja, index=False)
+      hoja = writer.sheets[nombre_hoja]
+      aplicar_formato_dinero(hoja)
       # nombre unico por hoja y sin espacios: TablaWishList, TablaPerfil
       nombre_tabla = f"Tabla{nombre_hoja.replace(' ', '')}"
-      agregar_tabla(writer.sheets[nombre_hoja], datos, nombre_tabla)
+      agregar_tabla(hoja, datos, nombre_tabla)

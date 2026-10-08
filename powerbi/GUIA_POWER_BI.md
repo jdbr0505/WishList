@@ -44,6 +44,8 @@ En la pestaña Inicio > Nueva medida, pegá las medidas de `medidas.dax` una por
 | Plazo Maximo (meses) | 10 |
 | Necesidades / Deseos / Ahorro Real % | 43.3% / 8% / 48.7% |
 
+**Formato de dólares.** Los montos del sistema están en dólares (USD), pero Power BI no lo sabe hasta que se lo indicás. Para cada medida de dinero (`Total Pendiente`, `Costo Total`) y para la columna `Costo Estimado`: seleccionala en el panel Datos, abrí **Herramientas de medida** (o **Herramientas de columna**) > **Formato** > **Moneda** y elegí **$ Inglés (Estados Unidos)**. Las medidas de porcentaje y de conteo no llevan moneda.
+
 Concepto central, el **contexto de filtro**: una medida no tiene un valor fijo. Cambia según los filtros del visual (el eje, los segmentadores). `CALCULATE` es la función que modifica ese contexto.
 
 ## Paso 4. Construir la página
