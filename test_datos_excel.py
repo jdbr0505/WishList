@@ -4,7 +4,7 @@ import pandas as pd
 from datos_excel import (
   COLUMNAS_PERFIL, COLUMNAS_WISHLIST,
   cargar_datos, guardar_excel, normalizar_perfil, normalizar_wishlist,
-  preparar_edicion, resumir_cambios, validar_wishlist,
+  excel_en_bytes, filtrar_tabla, preparar_edicion, resumir_cambios, validar_wishlist,
 )
 
 
@@ -150,6 +150,39 @@ def test_preparar_edicion_sin_cambios_no_reporta_cambios_reales():
   _, _, cambios = preparar_edicion(original, original.copy())
 
   assert (cambios["agregadas"], cambios["borradas"], cambios["modificadas"]) == (0, 0, 0)
+
+
+def test_filtrar_tabla_combina_filtros_y_busqueda_sin_modificar_el_original():
+  lista = _lista_normalizada()
+
+  solo_necesidades = filtrar_tabla(lista, {"Tipo": ["Necesidad"]})
+  buscar_mou = filtrar_tabla(lista, texto=" MOU ")
+  combinado = filtrar_tabla(lista, {"Tipo": ["Necesidad"], "Estado": ["Comprado"]})
+
+  assert solo_necesidades["Articulo"].tolist() == ["Medias", "Mouse"]
+  assert buscar_mou["Articulo"].tolist() == ["Mouse"]
+  assert combinado.empty
+  assert len(lista) == 3
+
+
+def test_filtrar_tabla_con_listas_vacias_no_filtra():
+  lista = _lista_normalizada()
+
+  assert len(filtrar_tabla(lista, {"Tipo": [], "Estado": []}, "")) == 3
+  assert len(filtrar_tabla(lista)) == 3
+
+
+def test_excel_en_bytes_genera_un_libro_valido_con_las_tablas():
+  from io import BytesIO
+  import openpyxl
+
+  contenido = excel_en_bytes({"WishList": _lista_normalizada(), "Perfil": pd.DataFrame(columns=COLUMNAS_PERFIL)})
+
+  libro = openpyxl.load_workbook(BytesIO(contenido))
+  assert libro.sheetnames == ["WishList", "Perfil"]
+  assert dict(libro["WishList"].tables.items()) == {"TablaWishList": "A1:I4"}
+  assert dict(libro["Perfil"].tables.items()) == {}   # hoja sin filas: queda como rango
+  assert pd.read_excel(BytesIO(contenido))["Articulo"].tolist() == ["Medias", "Mouse", "Pedalera"]
 
 
 def test_guardar_y_cargar_conserva_ambas_hojas_con_una_tabla_cada_una(tmp_path):

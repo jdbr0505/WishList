@@ -5,7 +5,7 @@ import streamlit as st
 
 from datos_excel import (
   COLUMNAS_PERFIL, ESTADOS, FRECUENCIAS, TIPOS, TIPOS_VALIDOS,
-  cargar_datos, guardar_excel, preparar_edicion,
+  cargar_datos, excel_en_bytes, filtrar_tabla, guardar_excel, preparar_edicion,
 )
 from datos_demo import hojas_demo
 from graficos import grafico_503020, grafico_plan_de_compras, grafico_ranking
@@ -133,22 +133,17 @@ with tab_articulos:
           df = df_actualizado
           st.success("¡Datos guardados exitosamente en el Excel!")
 
-  # Visualización rápida de los datos actuales
+  # Visualización rápida de los datos actuales, con filtros (solo cambian lo que se ve, no los datos)
   st.divider()
   st.subheader("Vista previa de los datos actuales")
-  st.dataframe(df, width="stretch")
+  filtro_texto, filtro_tipo, filtro_estado = st.columns([2, 1, 1])
+  buscar = filtro_texto.text_input("Buscar artículo", key="buscar_lista")
+  tipos_elegidos = filtro_tipo.multiselect("Tipo", TIPOS_VALIDOS, key="filtro_tipo")
+  estados_elegidos = filtro_estado.multiselect("Estado", ESTADOS, key="filtro_estado")
 
-  # Botón de descarga directa
-  if archivo.exists() and not usar_demo:
-    with open(archivo, "rb") as f:
-      st.download_button(
-          label="📥 Descargar Excel Actualizado",
-          data=f,
-          file_name=archivo.name,
-          mime=(
-              "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
-          ),
-      )
+  df_filtrado = filtrar_tabla(df, {"Tipo": tipos_elegidos, "Estado": estados_elegidos}, buscar)
+  st.caption(f"Mostrando {len(df_filtrado)} de {len(df)} artículos")
+  st.dataframe(df_filtrado, width="stretch")
 
 with tab_editar:
   st.subheader("Editar lista")
@@ -245,9 +240,22 @@ with tab_analisis:
       st.warning(f"Fondo de emergencia incompleto: cubre {cubiertos:.1f} meses. Los deseos esperan hasta completarlo.")
 
   analisis = analizar_wishlist(df, perfil_actual).sort_values("Puntaje", ascending=False)
-  vista = analisis[COLUMNAS_ANALISIS].assign(
-    Semaforo=analisis["Semaforo"].map(ICONOS_SEMAFORO),
-    **{"Meses de Espera": analisis["Meses de Espera"].replace(float("inf"), float("nan"))},
+
+  # filtros solo para la tabla; el Dashboard sigue usando `analisis` completo
+  a_texto, a_tipo, a_semaforo = st.columns([2, 1, 1])
+  buscar_analisis = a_texto.text_input("Buscar artículo", key="buscar_analisis")
+  tipos_analisis = a_tipo.multiselect("Tipo", TIPOS_VALIDOS, key="filtro_tipo_analisis")
+  semaforos_elegidos = a_semaforo.multiselect(
+    "Semáforo", list(ICONOS_SEMAFORO), format_func=ICONOS_SEMAFORO.get, key="filtro_semaforo"
+  )
+  analisis_filtrado = filtrar_tabla(
+    analisis, {"Tipo": tipos_analisis, "Semaforo": semaforos_elegidos}, buscar_analisis
+  )
+  st.caption(f"Mostrando {len(analisis_filtrado)} de {len(analisis)} artículos")
+
+  vista = analisis_filtrado[COLUMNAS_ANALISIS].assign(
+    Semaforo=analisis_filtrado["Semaforo"].map(ICONOS_SEMAFORO),
+    **{"Meses de Espera": analisis_filtrado["Meses de Espera"].replace(float("inf"), float("nan"))},
   )
   st.dataframe(vista, width="stretch", hide_index=True)
 
@@ -274,3 +282,14 @@ with tab_dashboard:
     st.plotly_chart(grafico_503020(perfil_actual), width="stretch")
     st.plotly_chart(grafico_ranking(analisis), width="stretch")
     st.plotly_chart(grafico_plan_de_compras(analisis, perfil_actual), width="stretch")
+
+# Descarga generada en memoria: usa los datos de esta ejecución (ya con lo guardado) sin leer el disco.
+# Va al final del script para ver el df y el perfil más recientes.
+with st.sidebar:
+  st.divider()
+  st.download_button(
+    label="📥 Descargar Excel de ejemplo" if usar_demo else "📥 Descargar Excel actualizado",
+    data=excel_en_bytes(agregar_analisis({**hojas, "WishList": df, "Perfil": perfil})),
+    file_name="WishList_ejemplo.xlsx" if usar_demo else archivo.name,
+    mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+  )

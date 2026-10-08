@@ -2,6 +2,8 @@
 
 Este modulo no usa Streamlit: asi se puede probar con pytest sin abrir la app.
 """
+from io import BytesIO
+
 import pandas as pd
 from openpyxl.utils import get_column_letter
 from openpyxl.worksheet.table import Table, TableStyleInfo
@@ -191,9 +193,33 @@ def agregar_tabla(hoja, datos, nombre):
   hoja.add_table(tabla)
 
 
+def filtrar_tabla(datos, filtros=None, texto="", columna_texto="Articulo"):
+  """Devuelve las filas que cumplen los filtros, sin modificar la tabla original.
+
+  filtros: {columna: [valores permitidos]}. Una lista vacia no filtra esa columna.
+  texto: busca (sin importar mayusculas) dentro de columna_texto.
+  """
+  mascara = pd.Series(True, index=datos.index)
+  for columna, valores in (filtros or {}).items():
+    if valores:
+      mascara &= datos[columna].isin(valores)
+  if texto.strip():
+    contiene = datos[columna_texto].astype("string").str.contains(texto.strip(), case=False, regex=False, na=False)
+    mascara &= contiene
+  return datos[mascara]
+
+
+def excel_en_bytes(hojas):
+  """Genera el Excel completo en memoria (para el boton de descarga), sin leer ni escribir el disco."""
+  buffer = BytesIO()
+  guardar_excel(hojas, buffer)
+  return buffer.getvalue()
+
+
 def guardar_excel(hojas, ruta):
   """Escribe todas las hojas, cada una como Tabla. Crea el libro desde cero:
-  no queda ninguna tabla anterior, asi que no puede duplicarse."""
+  no queda ninguna tabla anterior, asi que no puede duplicarse.
+  `ruta` puede ser una ruta de archivo o un BytesIO."""
   with pd.ExcelWriter(ruta, engine="openpyxl") as writer:
     for nombre_hoja, datos in hojas.items():
       datos.to_excel(writer, sheet_name=nombre_hoja, index=False)

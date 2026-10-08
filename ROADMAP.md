@@ -122,8 +122,8 @@ Verificación:
 - [x] Guardar los cambios del editor con la misma protección de errores. La lógica está en `datos_excel.py` (`preparar_edicion`, `validar_wishlist`, `resumir_cambios`) y tiene tests (45 en total). Probado en el navegador sobre una copia: editar un costo y borrar una fila actualizan `WishList`, `Analisis` y los rangos de las Tablas.
 - [x] Al guardar desde el editor, los costos en 0 pasan a vacío ("por cotizar") y la app avisa cuántos fueron.
 - [ ] Probar en el navegador agregar una fila nueva desde el editor (solo está probado con tests).
-- [ ] Filtros: estado, tipo, semáforo.
-- [ ] Botón de descarga que genere el Excel en memoria (`BytesIO`) en lugar de leer el archivo del disco.
+- [x] Filtros en la vista previa (búsqueda por nombre, Tipo y Estado) y en la tabla de Análisis (búsqueda, Tipo y Semáforo), con `filtrar_tabla()`. Solo cambian lo que se ve. El editor no se filtra a propósito: si lo hiciera, guardar borraría las filas ocultas.
+- [x] Botón de descarga en la barra lateral que genera el Excel en memoria (`excel_en_bytes`, con `BytesIO`) sin leer el disco; en modo ejemplo descarga el libro de ejemplo.
 - [ ] Estado de sesión (`st.session_state`) solo donde haga falta; anotar por qué.
 - [ ] Revisar `@st.cache_data`: ¿conviene aquí? (el archivo cambia; entender cuándo se invalida).
 - [ ] Guardado más seguro: escribir a un archivo temporal y reemplazar el original solo si todo salió bien (hoy un fallo a mitad puede dejar el archivo vacío).
