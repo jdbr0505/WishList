@@ -171,7 +171,9 @@ Ejercicios de Python (P1 a P13), reto final y preguntas de repaso: ver `docs/MAN
 
 - [x] `requirements.txt` (para correr la app) y `requirements-dev.txt` (suma `pytest`), con las versiones probadas fijadas.
 - [x] Demostración pública lista (`modo_solo_demo()` en `WishList.py`, `docs/DESPLIEGUE.md`, 3 tests en `test_modo_demo.py`). Falta publicarla yo en Streamlit Community Cloud, con el secreto `WISHLIST_SOLO_DEMO = "1"`.
-- [x] Datos reales fuera de git (`.gitignore` + dejaron de rastrearse). El historial todavía guarda versiones viejas: no hacer público el repositorio sin limpiarlo antes.
+- [x] Datos reales fuera de git (`.gitignore` + dejaron de rastrearse).
+- [x] Repositorio público nuevo (`jdbr0505/WishList`) con historial limpio y autor con la dirección `noreply`. El anterior quedó privado como `jdbr0505/WishList-privado`. Verificado: la actividad del repositorio nuevo muestra solo su creación, y los commits viejos no existen en él.
+- [ ] En GitHub: activar "Keep my email addresses private" y "Block command line pushes that expose my email" (Settings > Emails).
 - [ ] Integrar los commits de la remota (la rama local está adelantada y la remota tiene 2 commits nuevos) antes de hacer `git push`.
 - [ ] El flujo de GitHub Actions (`.github/workflows/python-app.yml`) quedó en Python 3.12 para coincidir con las versiones fijadas; falta ver que pase al subir.
 - [x] Repositorio git inicializado y con commits.
@@ -220,4 +222,5 @@ Límite conocido: las compras a plazos o suscripciones ya activas no restan del 
 
 | Fecha | Duda o error | Qué aprendí |
 |-------|--------------|-------------|
+| 2026-10-09 | Hice público el repositorio después de limpiar el historial con `push --force`, pero la pestaña Activity de GitHub seguía mostrando los commits viejos (con un correo personal) y se podían leer. | Para hacer público un repositorio con historial sensible hay que publicar uno nuevo; limpiar y forzar el push no alcanza. Auditar antes de cambiar la visibilidad. |
 | 2026-10-08 | `WishList.py` y `ROADMAP.md` volvieron a una versión vieja después de un `git pull origin main`. | Hacer commit de todo antes de un `pull`, y revisar `git status` y `git diff` después. Los archivos no confirmados pueden pisarse. |

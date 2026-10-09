@@ -48,5 +48,7 @@ Tu rama local está adelantada de la remota y la remota tiene commits que vos no
 ## Privacidad de tus datos reales
 
 - Los archivos con tus datos (`TablaWishList*.xlsx`, `WishList.xlsx` y los `.pbix`) están en `.gitignore`: ya no se suben. Siguen en tu computadora; su respaldo es OneDrive.
-- **El historial de git todavía guarda versiones viejas** de esos archivos (el primer commit ya está en GitHub, que es privado). No hagas público el repositorio sin antes limpiar el historial (por ejemplo con `git filter-repo`) o crear un repositorio nuevo con el código limpio.
+- **El repositorio público (`jdbr0505/WishList`) se creó nuevo, con un historial limpio:** sin esos archivos, sin tu correo personal (los commits usan la dirección `noreply` de GitHub) y sin rastro del historial anterior. El repositorio anterior quedó como respaldo **privado** en `jdbr0505/WishList-privado`.
+- **Lección aprendida:** limpiar el historial y hacer `push --force` no alcanza para un repositorio que se vuelve público. La pestaña *Activity* de GitHub muestra los códigos de los commits anteriores y se pueden leer por la API. La única forma de no dejar rastro es publicar un repositorio nuevo. Hacé siempre esta auditoría **antes** de cambiar la visibilidad.
+- **Cuidado con tu identidad:** este proyecto usa `jdbr0505 <150082935+jdbr0505@users.noreply.github.com>` como autor. En GitHub, activá *Settings > Emails > Keep my email addresses private* y *Block command line pushes that expose my email*.
 - El proyecto de Power BI guarda la ruta de tu usuario de Windows en las consultas. No es un dato financiero, pero conviene saberlo si algún día compartís el repositorio.
