@@ -12,3 +12,12 @@ __pycache__/
 TablaWishList*.xlsx
 WishList.xlsx
 *.pbix
+
+# SECRETOS de la version privada (claves de Google, login): nunca a git.
+# La plantilla .streamlit/secrets.toml.example (sin valores reales) si se sube.
+.streamlit/secrets.toml
+.env
+*service-account*.json
+*service_account*.json
+client_secret*.json
+credenciales*.json

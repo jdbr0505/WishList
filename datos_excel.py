@@ -165,20 +165,27 @@ def normalizar_perfil(datos):
   return _con_columnas(limpios, COLUMNAS_PERFIL)
 
 
-def cargar_datos(ruta):
-  """Carga todas las hojas en un diccionario {nombre_de_hoja: DataFrame}."""
+def preparar_hojas(hojas_leidas):
+  """Completa y limpia las hojas leidas de cualquier origen (Excel o Google Sheets).
+
+  Las hojas leidas pisan a las vacias; si falta alguna se usa la vacia.
+  """
   vacias = {
     "WishList": pd.DataFrame(columns=COLUMNAS_WISHLIST),
     "Perfil": pd.DataFrame(columns=COLUMNAS_PERFIL),
   }
-  # las hojas leidas pisan a las vacias; si falta alguna se usa la vacia
-  hojas = pd.read_excel(ruta, sheet_name=None) if ruta.exists() else {}
-  todas = {**vacias, **hojas}
+  todas = {**vacias, **hojas_leidas}
   return {
     **todas,
     "WishList": normalizar_wishlist(todas["WishList"]),
     "Perfil": normalizar_perfil(todas["Perfil"]),
   }
+
+
+def cargar_datos(ruta):
+  """Carga todas las hojas del Excel en un diccionario {nombre_de_hoja: DataFrame}."""
+  hojas = pd.read_excel(ruta, sheet_name=None) if ruta.exists() else {}
+  return preparar_hojas(hojas)
 
 
 def agregar_tabla(hoja, datos, nombre):

@@ -167,6 +167,27 @@ Power BI (siguiendo `powerbi/GUIA_POWER_BI.md`). Ejercicios B1 a B8:
 
 Ejercicios de Python (P1 a P13), reto final y preguntas de repaso: ver `docs/MANUAL_EJERCICIOS.md`.
 
+## Fase 6 — Versión privada en la nube (Google Sheets + login de Google)
+
+Objetivo: usar mis datos reales desde el teléfono sin encender la laptop. Guía completa: `docs/NUBE_PRIVADA.md`.
+
+Código (hecho y probado con simulaciones; falta probarlo con mis credenciales reales):
+- [x] `almacenamiento.py`: `AlmacenExcel` y `AlmacenGoogleSheets` con la misma interfaz. El de Google escribe primero y borra lo sobrante después, y nunca confunde un fallo de conexión con una hoja vacía (si no, un guardado podría borrar todo).
+- [x] `acceso.py`: modo de la app (demostración, nube o local), control de acceso por lista de correos (falla cerrado: lista vacía, correo sin verificar o sin sesión no entran) y revisión de la configuración.
+- [x] Login con `st.login` (Google): la app no carga ningún dato antes de pasar el control de acceso.
+- [x] Aviso claro si el archivo de secretos no se puede leer (por ejemplo, con BOM).
+- [x] Herramientas: `probar_conexion_sheets.py` (no escribe nada) y `subir_excel_a_sheets.py` (copia mi Excel a Google, pide confirmación).
+- [x] `.gitignore` y pruebas de seguridad (`test_seguridad_repositorio.py`) para que ningún secreto ni dato real llegue a git. Plantilla en `.streamlit/secrets.toml.example`.
+- [x] Pruebas: acceso (19), almacenamiento con Google simulado (17), versión privada con login simulado (10) y seguridad del repositorio (11). Una prueba de control comprobó que, si se rompe la puerta de acceso, las pruebas fallan.
+
+Lo que me toca hacer a mí (en Google y Streamlit):
+- [ ] Crear la hoja de Google, la cuenta de servicio y las credenciales de login (pasos 1 a 3 de la guía).
+- [ ] Completar `.streamlit/secrets.toml` en mi PC (paso 4) y correr `python probar_conexion_sheets.py`.
+- [ ] Copiar mis datos con `python subir_excel_a_sheets.py`.
+- [ ] Probar el login en mi PC (paso 7).
+- [ ] Publicar la app privada con una dirección que no se adivine y los secretos en Streamlit (paso 8), y probarla desde el teléfono.
+- [ ] Decidir si quiero un rol de solo lectura (hoy todo correo permitido puede editar).
+
 ## Calidad y hábitos (transversal)
 
 - [x] `requirements.txt` (para correr la app) y `requirements-dev.txt` (suma `pytest`), con las versiones probadas fijadas.
