@@ -35,18 +35,27 @@ archivo = Path(__file__).parent / "TablaWishList.xlsx"
 VALORES_SI = {"1", "true", "si", "sí", "yes"}
 
 
+def variable_activa(nombre):
+  """True si la variable de entorno (o el secreto de Streamlit) `nombre` vale 1, true, si o yes."""
+  if os.environ.get(nombre, "").strip().lower() in VALORES_SI:
+    return True
+  try:
+    return str(st.secrets.get(nombre, "")).strip().lower() in VALORES_SI
+  except Exception:  # sin archivo de secretos
+    return False
+
+
 def modo_solo_demo():
   """True si la app corre como demostracion publica: solo datos inventados, sin leer ni guardar el Excel.
 
-  Se activa con la variable de entorno (o secreto de Streamlit) WISHLIST_SOLO_DEMO=1.
-  Es lo que se configura al desplegar la app; en tu computadora no se define y la app funciona normal.
+  Es seguro por defecto: se activa con WISHLIST_SOLO_DEMO=1, o AUTOMATICAMENTE cuando no hay un
+  TablaWishList.xlsx al lado (en una app publicada no existe: esta ignorado por git). Asi, aunque se
+  olvide configurar el secreto, una app publicada no permite escribir datos.
+  Para usar la app con datos nuevos en un equipo sin Excel, defini WISHLIST_DATOS_REALES=1.
   """
-  if os.environ.get("WISHLIST_SOLO_DEMO", "").strip().lower() in VALORES_SI:
+  if variable_activa("WISHLIST_SOLO_DEMO"):
     return True
-  try:
-    return str(st.secrets.get("WISHLIST_SOLO_DEMO", "")).strip().lower() in VALORES_SI
-  except Exception:  # sin archivo de secretos: no es una demostracion
-    return False
+  return not archivo.exists() and not variable_activa("WISHLIST_DATOS_REALES")
 
 # Configuración de la página
 st.set_page_config(
@@ -93,6 +102,8 @@ if modo_solo_demo():
   usar_demo = True
   st.info("Demostración con datos inventados. Aquí no se guarda nada; puedes explorar todas las pestañas.")
   st.sidebar.info("Versión de demostración: los datos son inventados y no se guarda nada.")
+  if not variable_activa("WISHLIST_SOLO_DEMO"):
+    st.sidebar.caption("Para usar tus propios datos en tu equipo, define WISHLIST_DATOS_REALES=1 (ver docs/DESPLIEGUE.md).")
 else:
   usar_demo = st.sidebar.toggle(
     "Ver con datos de ejemplo",

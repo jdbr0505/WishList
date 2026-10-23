@@ -4,7 +4,8 @@ La app real guarda tus finanzas en un Excel local y no tiene contraseña, así q
 
 ## Cómo funciona la demostración
 
-- Se activa con la variable `WISHLIST_SOLO_DEMO=1` (en la nube, como "secreto").
+- Se activa con la variable `WISHLIST_SOLO_DEMO=1` (en la nube, como "secreto"), **y además es automática**: si no hay un `TablaWishList.xlsx` junto a `WishList.py` (en una app publicada nunca está, porque `.gitignore` lo excluye), la app arranca como demostración aunque se olvide el secreto. Se descubrió porque la primera versión publicada no tenía el secreto y mostraba el interruptor y el botón de descarga.
+- Para usar la app con datos propios en un equipo donde todavía no existe el Excel (por ejemplo, un Codespace nuevo), definí `WISHLIST_DATOS_REALES=1`.
 - Con esa variable, la app **nunca lee ni escribe** `TablaWishList.xlsx`. No existe el interruptor para pedir los datos reales.
 - Muestra un aviso arriba: "Demostración con datos inventados".
 - Los visitantes pueden recorrer todas las pestañas y descargar un Excel de ejemplo, pero no guardar.
@@ -34,7 +35,7 @@ Los menús pueden cambiar con el tiempo: usá esto como guía.
    - Secrets: escribí `WISHLIST_SOLO_DEMO = "1"`.
 5. **Deploy** y comprobá que aparece el aviso de demostración.
 
-**Nunca despliegues sin el secreto del paso 4.** Sin él la app buscaría `TablaWishList.xlsx` (que no está en git, así que mostraría una lista vacía), pero cualquiera podría empezar a escribir datos. Con el secreto no hay forma de hacerlo.
+**Poné igual el secreto del paso 4.** Aunque la app ya es segura por defecto (sin Excel real arranca como demostración), el secreto lo deja explícito y evita depender de ese comportamiento automático.
 
 ## Antes de subir a GitHub
 

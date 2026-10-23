@@ -64,6 +64,37 @@ def test_la_demostracion_no_guarda_nada_ni_modifica_el_excel_real(app_con_excel_
   assert _huella(real) == antes                        # el archivo real quedo intacto
 
 
+def test_seguro_por_defecto_sin_excel_y_sin_variable_es_solo_demostracion(app_con_excel_real, monkeypatch):
+  """Lo que pasa en una app publicada si se olvida el secreto: no hay Excel (esta en .gitignore)."""
+  monkeypatch.delenv("WISHLIST_SOLO_DEMO")
+  (app_con_excel_real / "TablaWishList.xlsx").unlink()
+
+  at = AppTest.from_file(str(app_con_excel_real / "WishList.py"), default_timeout=60).run()
+  at.text_input[0].set_value("Articulo nuevo")
+  at.number_input[0].set_value(10.0)
+  at.button[0].click().run()
+
+  assert not at.exception
+  assert len(at.sidebar.toggle) == 0                       # no hay interruptor
+  assert any("Demostración" in i.value for i in at.info)
+  assert not (app_con_excel_real / "TablaWishList.xlsx").exists()   # no se creo ningun archivo
+
+
+def test_con_datos_reales_activados_se_puede_empezar_sin_excel(app_con_excel_real, monkeypatch):
+  monkeypatch.delenv("WISHLIST_SOLO_DEMO")
+  monkeypatch.setenv("WISHLIST_DATOS_REALES", "1")
+  (app_con_excel_real / "TablaWishList.xlsx").unlink()
+
+  at = AppTest.from_file(str(app_con_excel_real / "WishList.py"), default_timeout=60).run()
+  at.text_input[0].set_value("Mi primer articulo")
+  at.number_input[0].set_value(25.0)
+  at.button[0].click().run()
+
+  assert not at.exception
+  assert len(at.sidebar.toggle) == 1
+  assert (app_con_excel_real / "TablaWishList.xlsx").exists()        # modo normal: crea el archivo
+
+
 def test_sin_la_variable_la_app_funciona_normal_con_el_excel(app_con_excel_real, monkeypatch):
   monkeypatch.delenv("WISHLIST_SOLO_DEMO")
 
