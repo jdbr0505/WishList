@@ -171,6 +171,8 @@ Ejercicios de Python (P1 a P13), reto final y preguntas de repaso: ver `docs/MAN
 
 Objetivo: usar mis datos reales desde el teléfono sin encender la laptop. Guía completa: `docs/NUBE_PRIVADA.md`.
 
+**Decisión (2026-10-23): pausada.** Configurar Google Cloud resultó demasiado complicado, así que sigo con el Excel en mi PC y la demostración pública para mostrar el proyecto. Desde el teléfono veo o edito el Excel con la app de Excel (OneDrive). El código de esta fase queda listo y probado pero sin usar: no estorba (sin los secretos la app no entra en modo nube) y se puede retomar cuando quiera. Si algún día lo retomo, la alternativa más simple es una base de datos con login por correo en lugar de Google Cloud.
+
 Código (hecho y probado con simulaciones; falta probarlo con mis credenciales reales):
 - [x] `almacenamiento.py`: `AlmacenExcel` y `AlmacenGoogleSheets` con la misma interfaz. El de Google escribe primero y borra lo sobrante después, y nunca confunde un fallo de conexión con una hoja vacía (si no, un guardado podría borrar todo).
 - [x] `acceso.py`: modo de la app (demostración, nube o local), control de acceso por lista de correos (falla cerrado: lista vacía, correo sin verificar o sin sesión no entran) y revisión de la configuración.

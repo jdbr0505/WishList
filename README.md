@@ -21,6 +21,11 @@ Sistema para organizar y priorizar compras con la **regla 50/30/20**: registrás
 
 Los datos reales nunca se suben a git (`.gitignore`).
 
+### Desde el teléfono
+
+- **Mostrar el proyecto:** abrí la demostración en línea (enlace de arriba).
+- **Tus datos reales:** `TablaWishList.xlsx` está en OneDrive, así que con la app de Excel (o la de OneDrive) lo ves y lo editás desde el teléfono. La hoja `Analisis` (el semáforo) la recalcula la app cuando guardás desde la PC, no desde el teléfono. Evitá tener el archivo abierto en los dos lados a la vez.
+
 ## Empezar
 
 ```
