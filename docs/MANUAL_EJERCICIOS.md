@@ -1,7 +1,7 @@
 # Manual de ejercicios: Python, Excel y Power BI con WishList
 
 Cómo usar este manual:
-1. Leé primero `GUIA_DEL_SISTEMA.md` (y `powerbi/GUIA_POWER_BI.md` antes de los ejercicios B).
+1. Leé primero `GUIA_DEL_SISTEMA.md` (y `GUIA_POWER_BI.md` antes de los ejercicios B).
 2. Hacé cada ejercicio sin mirar `SOLUCIONES.md`. Antes de calcular, escribí qué resultado esperás.
 3. Compará con el "Resultado esperado". Si no coincide, buscá por qué antes de ver la solución.
 4. Marcá la casilla cuando lo logres y anotá lo que aprendiste en el ROADMAP (sección "Registro de dudas y aprendizajes").
@@ -19,6 +19,8 @@ df = pd.read_excel("powerbi/WishList_demo.xlsx", sheet_name="Analisis")
 ```
 
 Corré tus archivos desde la carpeta del proyecto: `python practica/p01.py`.
+
+Si tu ejercicio importa código del proyecto (por ejemplo `from logica.finanzas import ...`), dile a Python dónde está: en PowerShell, `$env:PYTHONPATH = "python"` antes de correrlo.
 
 ---
 
@@ -173,10 +175,10 @@ Pista: `SWITCH(SELECTEDVALUE(Categorias[Categoria]), ...)`.
 **P11. Agregar una columna al sistema.** [ ]
 Agregá la columna `Link` (dirección web de la tienda) de punta a punta. Trabajá en una rama de git: `git switch -c agregar-link`.
 Checklist:
-- [ ] Agregarla a `COLUMNAS_WISHLIST` en `datos_excel.py`.
-- [ ] Agregar el campo `st.text_input("Link")` al formulario y el valor al diccionario de `nuevo_articulo` en `WishList.py`.
-- [ ] Escribir un test en `test_datos_excel.py`: un Excel antiguo sin `Link` se carga con la columna vacía.
-- [ ] Correr `python -m pytest` (todo en verde).
+- [ ] Agregarla a `COLUMNAS_WISHLIST` en `python/logica/datos_excel.py`.
+- [ ] Agregar el campo `st.text_input("Link")` al formulario y el valor al diccionario de `nuevo_articulo` en `python/interfaz/WishList.py`.
+- [ ] Escribir un test en `python/pruebas/test_datos_excel.py`: un Excel antiguo sin `Link` se carga con la columna vacía.
+- [ ] Correr `python -m pytest python/pruebas` (todo en verde).
 - [ ] Probar en la app con el modo de ejemplo apagado sobre una copia de tu Excel.
 - [ ] Anotar en el ROADMAP.
 Pregunta: ¿qué pasa con las filas antiguas del Excel y por qué?

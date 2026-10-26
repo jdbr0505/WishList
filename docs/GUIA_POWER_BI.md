@@ -2,8 +2,8 @@
 
 Objetivo: construir un reporte de una página que muestre lo mismo que el Dashboard de la app, y entender qué hace cada paso.
 
-Archivos de esta carpeta:
-- `WishList_demo.xlsx`: datos de ejemplo con las hojas WishList, Perfil y Analisis (regenerable con `python exportar_demo.py`).
+Archivos de la carpeta `powerbi/` (junto a `WishList.pbip`):
+- `WishList_demo.xlsx`: datos de ejemplo con las hojas WishList, Perfil y Analisis (regenerable con `python python/herramientas/exportar_demo.py`).
 - `consultas_power_query.m`: las consultas M para cargar las tablas.
 - `medidas.dax`: las medidas DAX, de nivel 1 a 3.
 

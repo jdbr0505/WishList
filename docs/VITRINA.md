@@ -30,21 +30,21 @@ Lo haces tú porque implica entrar a tu cuenta de Streamlit y pegar tus secretos
 2. En PowerShell, desde la carpeta del proyecto:
 
    ```
-   python preparar_vitrina.py
+   python python/herramientas/preparar_vitrina.py
    ```
 
-   Pide la contraseña dos veces (no se ve al escribirla), lee `TablaWishList.xlsx` **sin modificarlo** y crea `vitrina_secretos.toml`.
-3. Abre `vitrina_secretos.toml` y copia **todo** su contenido.
+   Pide la contraseña dos veces (no se ve al escribirla), lee `excel/TablaWishList.xlsx` **sin modificarlo** y crea `excel/vitrina_secretos.toml`.
+3. Abre `excel/vitrina_secretos.toml` y copia **todo** su contenido.
 4. Entra a share.streamlit.io, abre tu app y ve a **⋮ > Settings > Secrets** (los menús pueden cambiar).
 5. **Borra lo que haya** en ese cuadro (incluida la línea `WISHLIST_SOLO_DEMO = "1"`), pega el contenido copiado y guarda. La app se reinicia sola.
 6. Comprueba en la dirección pública: debe abrir la demostración. Prueba una contraseña equivocada (dice incorrecta y sigue la demostración) y luego la correcta (cambian los datos y aparece "Vitrina de solo lectura" en la barra lateral).
-7. **Borra `vitrina_secretos.toml`.** Tiene tus datos reales. Git ya lo ignora, pero la carpeta está en OneDrive, que sí lo sincronizaría.
+7. **Borra `excel/vitrina_secretos.toml`.** Tiene tus datos reales. Git ya lo ignora, pero la carpeta está en OneDrive, que sí lo sincronizaría.
 
 **Importante:** el secreto `WISHLIST_SOLO_DEMO` tiene prioridad sobre todo. Si queda en los secretos, la página muestra siempre la demostración y el recuadro de contraseña no aparece. Por eso el paso 5 pide borrarlo.
 
 ## Cómo se actualiza o se cambia la clave
 
-- **Actualizar los datos:** guarda tus cambios en `TablaWishList.xlsx`, corre otra vez `python preparar_vitrina.py` (puede ser la misma contraseña), pega el nuevo contenido en **Settings > Secrets** y guarda. Borra el archivo.
+- **Actualizar los datos:** guarda tus cambios en `TablaWishList.xlsx`, corre otra vez `python python/herramientas/preparar_vitrina.py` (puede ser la misma contraseña), pega el nuevo contenido en **Settings > Secrets** y guarda. Borra el archivo.
 - **Cambiar la contraseña:** igual, con la contraseña nueva. La anterior deja de funcionar al guardar los secretos.
 - **Volver a solo demostración:** en **Settings > Secrets** deja únicamente `WISHLIST_SOLO_DEMO = "1"`. Los datos reales desaparecen de Streamlit (no los del Excel de tu computadora).
 
@@ -52,22 +52,22 @@ Lo haces tú porque implica entrar a tu cuenta de Streamlit y pegar tus secretos
 
 | Pieza | Archivo | Qué hace |
 |---|---|---|
-| Huella de la clave | `vitrina.py` (`generar_clave_hash`, `verificar_clave`) | `scrypt` con sal aleatoria y comparación en tiempo constante (`hmac.compare_digest`). Si falta la huella o está rota, **nadie entra**. |
-| Datos codificados | `vitrina.py` (`codificar_excel`, `hojas_desde_b64`) | El Excel se guarda como texto base64 dentro del secreto. Solo se decodifica **después** de verificar la contraseña. |
-| Límite de intentos | `vitrina.py` (`LimitadorIntentos`) | Un contador global compartido por todas las sesiones, no uno por visitante. |
-| Elección de modo | `acceso.py` (`elegir_modo`) | `WISHLIST_SOLO_DEMO` gana; luego la vitrina; luego el Excel local; si no, demostración. |
-| Una sola página | `WishList.py` (`abrir_vitrina`) | Devuelve los datos reales o `None`; con `None` la página se arma igual que la demostración. Cualquier fallo (configuración incompleta, datos ilegibles, contraseña mala, bloqueo) cae en la demostración, **nunca** en datos reales. |
-| Solo lectura | `WishList.py` (`SOLO_LECTURA`) | Sin formularios, sin editor, sin descarga, y `guardar()` se niega. Ignora un Excel local aunque exista al lado. |
-| Preparación | `preparar_vitrina.py` | Genera el TOML, lo valida (lee los datos de vuelta y verifica la clave) y lo escribe sin BOM. |
+| Huella de la clave | `python/logica/vitrina.py` (`generar_clave_hash`, `verificar_clave`) | `scrypt` con sal aleatoria y comparación en tiempo constante (`hmac.compare_digest`). Si falta la huella o está rota, **nadie entra**. |
+| Datos codificados | `python/logica/vitrina.py` (`codificar_excel`, `hojas_desde_b64`) | El Excel se guarda como texto base64 dentro del secreto. Solo se decodifica **después** de verificar la contraseña. |
+| Límite de intentos | `python/logica/vitrina.py` (`LimitadorIntentos`) | Un contador global compartido por todas las sesiones, no uno por visitante. |
+| Elección de modo | `python/logica/acceso.py` (`elegir_modo`) | `WISHLIST_SOLO_DEMO` gana; luego la vitrina; luego el Excel local; si no, demostración. |
+| Una sola página | `python/interfaz/WishList.py` (`abrir_vitrina`) | Devuelve los datos reales o `None`; con `None` la página se arma igual que la demostración. Cualquier fallo (configuración incompleta, datos ilegibles, contraseña mala, bloqueo) cae en la demostración, **nunca** en datos reales. |
+| Solo lectura | `python/interfaz/WishList.py` (`SOLO_LECTURA`) | Sin formularios, sin editor, sin descarga, y `guardar()` se niega. Ignora un Excel local aunque exista al lado. |
+| Preparación | `python/herramientas/preparar_vitrina.py` | Genera el TOML, lo valida (lee los datos de vuelta y verifica la clave) y lo escribe sin BOM. |
 
-Las pruebas (`test_vitrina.py`, `test_vitrina_app.py`, `test_preparar_vitrina.py`) comprueban que sin contraseña solo se ve la demostración, que una incorrecta no entra, que el bloqueo vale para todas las sesiones, que sin contraseña no se guarda nada y que el archivo generado abre la vitrina de punta a punta. Para saber que esas pruebas detectan fallos, se sabotearon a propósito el verificador (siempre aceptaba), el limitador (nunca bloqueaba) y la entrada de la página (no pedía contraseña): en los tres casos las pruebas fallaron, como debía ser.
+Las pruebas (`python/pruebas/test_vitrina.py`, `test_vitrina_app.py`, `test_preparar_vitrina.py`) comprueban que sin contraseña solo se ve la demostración, que una incorrecta no entra, que el bloqueo vale para todas las sesiones, que sin contraseña no se guarda nada y que el archivo generado abre la vitrina de punta a punta. Para saber que esas pruebas detectan fallos, se sabotearon a propósito el verificador (siempre aceptaba), el limitador (nunca bloqueaba) y la entrada de la página (no pedía contraseña): en los tres casos las pruebas fallaron, como debía ser.
 
 ## Si algo falla
 
 - **"Contraseña incorrecta (recibí N caracteres)" y estás seguro de la clave:**
   1. Compara N con el largo real de tu contraseña. Si N es mayor o menor, se coló o faltó algo (un espacio al final, el autocompletado del navegador, un pegado raro). Escríbela a mano, sin pegar.
-  2. Si N es correcto, probablemente la clave que usaste al crear el archivo no es la que crees (o un carácter invisible entró al escribirla en la terminal; un `Ctrl+V` en una terminal de Windows lo hace). Genera de nuevo con `python preparar_vitrina.py --visible` (la clave se ve al escribirla) y pega los secretos otra vez. El script avisa cuántos caracteres tiene tu clave: ese número debe coincidir con el «recibí N» de la app.
-  3. Antes de pegar los secretos, puedes comprobar la clave contra el archivo con `python preparar_vitrina.py --probar`. Si ahí coincide pero la app dice que no, el problema son los secretos pegados (revisa que sea el archivo más reciente y completo).
+  2. Si N es correcto, probablemente la clave que usaste al crear el archivo no es la que crees (o un carácter invisible entró al escribirla en la terminal; un `Ctrl+V` en una terminal de Windows lo hace). Genera de nuevo con `python python/herramientas/preparar_vitrina.py --visible` (la clave se ve al escribirla) y pega los secretos otra vez. El script avisa cuántos caracteres tiene tu clave: ese número debe coincidir con el «recibí N» de la app.
+  3. Antes de pegar los secretos, puedes comprobar la clave contra el archivo con `python python/herramientas/preparar_vitrina.py --probar`. Si ahí coincide pero la app dice que no, el problema son los secretos pegados (revisa que sea el archivo más reciente y completo).
 - **"Demasiados intentos fallidos":** 10 errores en 10 minutos bloquean el acceso, incluso con la clave correcta. Espera 10 minutos sin intentar nada y prueba una sola vez, bien escrita.
 - **Sale siempre la demostración y no aparece el recuadro de contraseña:** los secretos no se aplicaron. Revisa que esté `WISHLIST_MODO = "vitrina"` y que **no** esté `WISHLIST_SOLO_DEMO`.
 - **Aviso "La vitrina no está configurada del todo (falta: …)":** faltan secretos. Pega de nuevo el contenido completo del archivo.

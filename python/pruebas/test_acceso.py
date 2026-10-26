@@ -1,6 +1,6 @@
 import pytest
 
-from acceso import MODO_DEMO, MODO_LOCAL, MODO_VITRINA, diagnosticar_archivo_secretos, elegir_modo
+from logica.acceso import MODO_DEMO, MODO_LOCAL, MODO_VITRINA, diagnosticar_archivo_secretos, elegir_modo
 
 
 @pytest.mark.parametrize("solo_demo, vitrina, excel, reales, esperado", [

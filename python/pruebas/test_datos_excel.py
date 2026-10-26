@@ -1,7 +1,7 @@
 import openpyxl
 import pandas as pd
 
-from datos_excel import (
+from logica.datos_excel import (
   COLUMNAS_PERFIL, COLUMNAS_WISHLIST,
   cargar_datos, guardar_excel, normalizar_perfil, normalizar_wishlist,
   excel_en_bytes, filtrar_tabla, preparar_edicion, resumir_cambios, validar_wishlist,

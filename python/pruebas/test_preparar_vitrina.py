@@ -4,9 +4,9 @@ import tomllib
 import pandas as pd
 import pytest
 
-import preparar_vitrina
-from datos_excel import COLUMNAS_PERFIL, guardar_excel, normalizar_wishlist
-from vitrina import hojas_desde_b64, verificar_clave
+from herramientas import preparar_vitrina
+from logica.datos_excel import COLUMNAS_PERFIL, guardar_excel, normalizar_wishlist
+from logica.vitrina import hojas_desde_b64, verificar_clave
 
 CLAVE = "una-clave-larga-123"
 

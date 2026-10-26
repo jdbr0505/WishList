@@ -184,8 +184,8 @@ El caso del vacío va primero: `NaN < 50` da `False` y caería hasta "Caro" por 
 
 **P10**
 ```python
-import finanzas as f
-from datos_demo import hojas_demo
+from logica import finanzas as f
+from logica.datos_demo import hojas_demo
 
 hojas = hojas_demo()
 perfil = f.perfil_desde_hoja(hojas["Perfil"])
@@ -290,8 +290,8 @@ Detalle: `normalizar_wishlist` pone las columnas esperadas primero, así que `Li
 **P12**
 ```python
 import pandas as pd
-import finanzas as f
-from datos_demo import hojas_demo
+from logica import finanzas as f
+from logica.datos_demo import hojas_demo
 
 hojas = hojas_demo()
 perfil = f.perfil_desde_hoja(hojas["Perfil"])
@@ -322,7 +322,7 @@ Con los pesos actuales el top 4 es Medias 85.0, Mouse 81.2, Zapatos 81.2, Guitar
 ## Reto final
 
 ```python
-import finanzas as f
+from logica import finanzas as f
 
 p2 = f.Perfil(
     perfil.ingreso * 1.2, perfil.gastos_fijos, perfil.deseos_gastados,

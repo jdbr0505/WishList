@@ -21,20 +21,20 @@ Objetivo: registrar artículos que quiero comprar, calcular si conviene comprarl
 Cómo correr la app (desde la carpeta del proyecto):
 
 ```
-streamlit run WishList.py
+streamlit run python/interfaz/WishList.py
 python -m pytest
 ```
 
 ## Decisiones tomadas
 
 - **Costo vacío = por cotizar, nunca 0.** El formulario rechaza 0, y los negativos los impide el campo (`min_value=0.`).
-- **El Excel central es `TablaWishList.xlsx`** (variable `archivo` en `WishList.py`). Tiene las hojas `WishList`, `Perfil` y `Analisis`. `WishList.xlsx` (de la raíz) queda como respaldo.
+- **El Excel central es `excel/TablaWishList.xlsx`** (variable `archivo` en `python/interfaz/WishList.py`). Tiene las hojas `WishList`, `Perfil` y `Analisis`. El respaldo del original es `excel/TablaWishList - copia.xlsx`. El `WishList.xlsx` suelto (2 artículos de prueba y un perfil vacío) se eliminó al ordenar el proyecto (2026-10-26).
 - **El Excel central es un archivo gestionado por la app.** Se reescribe completo en cada guardado. Los datos de las celdas se conservan (también las filas escritas a mano), pero se pierden hojas extra, fórmulas, gráficos, tablas dinámicas y formato propio. El análisis en Excel y Power BI va en otro libro que se conecta a este.
 - **La hoja `Analisis` la calcula la app** en cada guardado (`agregar_analisis`). Excel y Power BI leen de ahí el mismo semáforo que muestra la app.
 - **Cada hoja con datos es una Tabla de Excel** (`TablaWishList`, `TablaPerfil`, `TablaAnalisis`), recreada en cada guardado. Una hoja sin filas queda como rango.
 - **Tipo vacío pasa a "Sin clasificar" y Estado vacío a "Pendiente"** al cargar (decisión de Claude, se puede cambiar).
 - **Un gasto fuera de alcance** (que, solo, tardaría más de 6 meses) no bloquea la fila de espera de los gastos pequeños.
-- **Moneda: dólares (USD).** Todos los montos están en dólares. Los nombres de columna no cambian (así no se rompen el Excel ni Power BI): en la app se muestran como `$50.00` y en el Excel con formato de dólares. En Power BI hay que darle formato de moneda a las medidas (ver `powerbi/GUIA_POWER_BI.md`).
+- **Moneda: dólares (USD).** Todos los montos están en dólares. Los nombres de columna no cambian (así no se rompen el Excel ni Power BI): en la app se muestran como `$50.00` y en el Excel con formato de dólares. En Power BI hay que darle formato de moneda a las medidas (ver `GUIA_POWER_BI.md`).
 - **Privacidad: la app que edita se queda en mi computadora.** El modo local no tiene contraseña y guarda en un Excel local. En la nube hay una sola página: por defecto es la demostración (datos inventados) y, con la **vitrina** activada, una contraseña compartida desbloquea mis datos reales en solo lectura (los datos van en los secretos de Streamlit, nunca en git). Los archivos con datos reales (`TablaWishList*.xlsx`, `WishList.xlsx`, `*.pbix`, `vitrina_secretos.toml`) están en `.gitignore`. Ver `docs/DESPLIEGUE.md` y `docs/VITRINA.md`.
 - **Vitrina: una contraseña para todos, y se ve todo, incluido el perfil (ingreso, gastos, ahorro).** Lo elegí así (2026-10-26). Los datos son una foto del Excel del momento en que se prepara; para actualizarla se vuelve a correr `preparar_vitrina.py` y se pegan los secretos.
 - **Sin CSS ni HTML propios.** Streamlit genera la interfaz.
@@ -140,7 +140,7 @@ Verificación:
 - [x] Colores con significado (`COLORES_SEMAFORO`): verde, amarillo y rojo igual que el semáforo, gris para lo que falta.
 - [x] Módulo `graficos.py` (Plotly, sin Streamlit) con tests en `test_graficos.py`.
 - [x] **El Dashboard de la app replica las dos páginas del reporte de Power BI** (2026-10-26): sub-pestaña «Resumen» (página Dashboard: tarjetas Total Pendiente, % de un Mes de Ingreso y Por Cotizar; Costo por Decisión; ranking; meta contra real; tabla) y «Plan de compras» (4 tarjetas, dona Pendiente por tipo, meses de espera por artículo, costo por mes, detalle por prioridad), con segmentadores de Tipo y Estado/Semáforo. El gráfico de presupuesto acumulado quedó en una tercera sub-pestaña. Funciona igual con los datos de ejemplo y con los reales (la vitrina).
-- [x] `medidas.py`: las medidas de `powerbi/medidas.dax` en pandas. `test_medidas.py` comprueba que con los datos de ejemplo dan los mismos números que la tabla de `powerbi/GUIA_POWER_BI.md` (12 pendientes, $3,847, 2 por cotizar, 256%, 3/6/1, 10 meses).
+- [x] `medidas.py`: las medidas de `powerbi/medidas.dax` en pandas. `test_medidas.py` comprueba que con los datos de ejemplo dan los mismos números que la tabla de `GUIA_POWER_BI.md` (12 pendientes, $3,847, 2 por cotizar, 256%, 3/6/1, 10 meses).
 - [x] Decisión: la página pasó a diseño ancho (`layout="wide"`) para que el dashboard tenga dos gráficos por fila, como en Power BI.
 - [ ] Revisar el dashboard con mis datos reales cuando tenga perfil y precios.
 - [ ] Si cambio algo en el reporte de Power BI (una medida, un título, un gráfico), cambiarlo también en `medidas.py` / `graficos.py` para que sigan iguales.
@@ -150,7 +150,7 @@ Verificación:
 
 Material preparado (en `docs/` y `powerbi/`):
 - [x] `docs/GUIA_DEL_SISTEMA.md`, `docs/MANUAL_EJERCICIOS.md` y `docs/SOLUCIONES.md`.
-- [x] `powerbi/WishList_demo.xlsx` (regenerable con `python exportar_demo.py`), `powerbi/medidas.dax`, `powerbi/consultas_power_query.m` y `powerbi/GUIA_POWER_BI.md`.
+- [x] `powerbi/WishList_demo.xlsx` (regenerable con `python python/herramientas/exportar_demo.py`), `powerbi/medidas.dax`, `powerbi/consultas_power_query.m` y `GUIA_POWER_BI.md`.
 - [x] La app guarda la hoja `Analisis` (con `TablaAnalisis`) en cada guardado.
 
 Excel (en un libro aparte que se conecte a `TablaWishList.xlsx`, no dentro de él). Ejercicios E1 a E10:
@@ -160,7 +160,7 @@ Excel (en un libro aparte que se conecte a `TablaWishList.xlsx`, no dentro de é
 - [ ] Una tabla dinámica por semáforo y por tipo (E7). Ya hice una por Estado y Tipo.
 - [ ] Power Query en Excel (E10).
 
-Power BI (siguiendo `powerbi/GUIA_POWER_BI.md`). Ejercicios B1 a B8:
+Power BI (siguiendo `GUIA_POWER_BI.md`). Ejercicios B1 a B8:
 - [x] Conectar al `.xlsx` y cargar `TablaAnalisis` y `TablaPerfil`.
 - [x] Medidas DAX: total pendiente, % de un mes de ingreso, por cotizar, meta contra real, color del semáforo.
 - [x] Formato de dólares en el modelo: `Costo Total`, `Total Pendiente`, `Ingreso Mensual`, la columna `Costo Estimado`, `Compromiso Mensual` y las 4 columnas de dinero de `TablaPerfil`. Los tipos de dinero pasaron de entero a decimal (antes el entero redondeaba los centavos) y los porcentajes tienen formato de porcentaje. Falta abrir el proyecto y comprobar visualmente.
@@ -183,13 +183,25 @@ Objetivo: usar mis datos reales desde el teléfono sin encender la laptop.
 - [x] Decidí que sí quiero una vitrina en el navegador con mis datos reales: contraseña compartida, solo lectura, se ve todo (2026-10-26).
 - [x] Código de la vitrina listo y probado: `vitrina.py`, `preparar_vitrina.py`, modo `vitrina` en `acceso.py` y `WishList.py`, y 3 archivos de pruebas (incluye sabotajes: con el verificador siempre-verdadero o el limitador apagado, las pruebas fallan).
 - [x] Decidí que sea **una sola página** (2026-10-26): sin contraseña (o con una mala) se ve la demostración con datos inventados; con la contraseña correcta, mis datos reales en solo lectura. Nada de segunda app.
-- [x] Corrí `python preparar_vitrina.py` y generé `vitrina_secretos.toml`.
+- [x] Corrí `python python/herramientas/preparar_vitrina.py` y generé `vitrina_secretos.toml`.
 - [ ] Pegar ese contenido en Settings > Secrets de la app `wishlistjd` (reemplazando lo que haya y quitando `WISHLIST_SOLO_DEMO`), probar clave mala y buena, y borrar `vitrina_secretos.toml` (guía: `docs/VITRINA.md`).
 - [ ] Cada vez que cambie mis datos y quiera que la vitrina los muestre: repetir `preparar_vitrina.py` y pegar los secretos nuevos.
 
+## Fase 7 — Estructura del proyecto (2026-10-26)
+
+Orden pedido por mí, para que quien lea el código no se confunda. Una sola app, ordenada por función (no se duplicó el código en «Público» y «Vitrina»; `python/README.md` dice a qué sección sirve cada archivo).
+
+- [x] `python/` con `interfaz/`, `logica/`, `dashboards/`, `herramientas/` y `pruebas/`; imports como `from logica.finanzas import ...`.
+- [x] `excel/` (mis libros reales, fuera de git), `powerbi/` (el `.pbip`, sus carpetas, consultas y medidas), `docs/` (guías, manual, hoja de ruta) y `requisitos/`.
+- [x] CI (`.github/workflows/python-app.yml`) y Codespaces (`.devcontainer/`) adaptados a las rutas nuevas.
+- [x] Eliminado `WishList.xlsx` (stub de 2 artículos); `WishList.pbix` (ignorado por git) se deja en `powerbi/` porque se modificó hoy.
+- [ ] Decidir cómo publicar con esta estructura (Streamlit Cloud solo busca `requirements.txt` en la raíz o junto al archivo principal, y no deja cambiar el archivo principal sin recrear la app). Ver `docs/DESPLIEGUE.md`.
+- [ ] El modelo de Power BI lee `WishList_demo.xlsx` de otra carpeta (`...\Desktop\Python practicas\powerbi\`). Cambiar el origen a `powerbi/WishList_demo.xlsx` de este proyecto cuando abra el `.pbip` en su nueva ubicación.
+- [ ] Al terminar el proyecto: borrar todo lo relacionado con Claude (carpeta `.claude/`, menciones en el código y los documentos, y las guías que le piden cosas a Claude).
+
 ## Calidad y hábitos (transversal)
 
-- [x] `requirements.txt` (para correr la app) y `requirements-dev.txt` (suma `pytest`), con las versiones probadas fijadas.
+- [x] `requisitos/requirements.txt` (para correr la app) y `requisitos/requirements-dev.txt` (suma `pytest`), con las versiones probadas fijadas.
 - [x] Demostración pública lista (`modo_solo_demo()` en `WishList.py`, `docs/DESPLIEGUE.md`, 3 tests en `test_modo_demo.py`). Falta publicarla yo en Streamlit Community Cloud, con el secreto `WISHLIST_SOLO_DEMO = "1"`.
 - [x] Datos reales fuera de git (`.gitignore` + dejaron de rastrearse).
 - [x] Repositorio público nuevo (`jdbr0505/WishList`) con historial limpio y autor con la dirección `noreply`. El anterior quedó privado como `jdbr0505/WishList-privado`. Verificado: la actividad del repositorio nuevo muestra solo su creación, y los commits viejos no existen en él.

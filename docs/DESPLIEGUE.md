@@ -4,7 +4,7 @@ La app real guarda tus finanzas en un Excel local y no tiene contraseña, así q
 
 ## Cómo funciona la demostración
 
-- Se activa con la variable `WISHLIST_SOLO_DEMO=1` (en la nube, como "secreto"), **y además es automática**: si no hay un `TablaWishList.xlsx` junto a `WishList.py` (en una app publicada nunca está, porque `.gitignore` lo excluye), la app arranca como demostración aunque se olvide el secreto. Se descubrió porque la primera versión publicada no tenía el secreto y mostraba el interruptor y el botón de descarga.
+- Se activa con la variable `WISHLIST_SOLO_DEMO=1` (en la nube, como "secreto"), **y además es automática**: si no hay un `excel/TablaWishList.xlsx` (en una app publicada nunca está, porque `.gitignore` lo excluye), la app arranca como demostración aunque se olvide el secreto. Se descubrió porque la primera versión publicada no tenía el secreto y mostraba el interruptor y el botón de descarga.
 - Para usar la app con datos propios en un equipo donde todavía no existe el Excel (por ejemplo, un Codespace nuevo), definí `WISHLIST_DATOS_REALES=1`.
 - Con esa variable, la app **nunca lee ni escribe** `TablaWishList.xlsx`. No existe el interruptor para pedir los datos reales.
 - Muestra un aviso arriba: "Demostración con datos inventados".
@@ -18,7 +18,7 @@ La app real guarda tus finanzas en un Excel local y no tiene contraseña, así q
 En PowerShell, desde la carpeta del proyecto:
 
 ```
-$env:WISHLIST_SOLO_DEMO = "1"; streamlit run WishList.py
+$env:WISHLIST_SOLO_DEMO = "1"; streamlit run python/interfaz/WishList.py
 ```
 
 Deberías ver el aviso de demostración y ningún interruptor "Ver con datos de ejemplo". Cuando termines, cerrá esa terminal (la variable solo vive en ella) y volvé a correr la app normal.

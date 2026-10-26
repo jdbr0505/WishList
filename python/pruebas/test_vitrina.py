@@ -2,8 +2,8 @@
 import pandas as pd
 import pytest
 
-from datos_excel import COLUMNAS_PERFIL, guardar_excel, normalizar_wishlist
-from vitrina import (
+from logica.datos_excel import COLUMNAS_PERFIL, guardar_excel, normalizar_wishlist
+from logica.vitrina import (
   LIMITADOR, LimitadorIntentos, codificar_excel, faltantes_config, generar_clave_hash,
   hojas_desde_b64, verificar_clave,
 )
@@ -88,7 +88,7 @@ def test_faltantes_lista_nombres_sin_valores():
 # ---------- texto de secretos ----------
 def test_texto_secretos_es_toml_valido_sin_la_contrasena_y_con_los_datos(tmp_path):
   import tomllib
-  from vitrina import texto_secretos
+  from logica.vitrina import texto_secretos
 
   texto = texto_secretos(_excel_de_prueba(tmp_path), CLAVE)
   secretos = tomllib.loads(texto)
@@ -101,7 +101,7 @@ def test_texto_secretos_es_toml_valido_sin_la_contrasena_y_con_los_datos(tmp_pat
 
 
 def test_texto_secretos_rechaza_una_clave_corta(tmp_path):
-  from vitrina import texto_secretos
+  from logica.vitrina import texto_secretos
 
   with pytest.raises(ValueError):
     texto_secretos(_excel_de_prueba(tmp_path), "corta")

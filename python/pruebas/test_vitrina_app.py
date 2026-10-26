@@ -3,19 +3,16 @@
 Se simula con AppTest (sin internet).
 """
 import hashlib
-import shutil
-from pathlib import Path
 
 import pandas as pd
 import pytest
 from streamlit.testing.v1 import AppTest
 
-import vitrina
-from datos_excel import COLUMNAS_PERFIL, guardar_excel, normalizar_wishlist
-from vitrina import codificar_excel, generar_clave_hash
+from ayudas import copiar_app, excel_de_la_copia
+from logica import vitrina
+from logica.datos_excel import COLUMNAS_PERFIL, guardar_excel, normalizar_wishlist
+from logica.vitrina import codificar_excel, generar_clave_hash
 
-RAIZ = Path(__file__).parent
-ARCHIVOS_APP = [p.name for p in RAIZ.glob("*.py") if not p.name.startswith("test_")]   # toda la app, sin olvidar modulos nuevos
 CLAVE = "clave-de-prueba-123"
 ARTICULO_REAL = "ARTICULO-DE-LA-VITRINA"
 ARTICULO_DEMO = "Guitarra nueva"          # viene de datos_demo.py
@@ -47,8 +44,7 @@ def secretos(tmp_path):
 
 @pytest.fixture(autouse=True)
 def entorno(tmp_path, monkeypatch):
-  for nombre in ARCHIVOS_APP:
-    shutil.copy(RAIZ / nombre, tmp_path / nombre)
+  copiar_app(tmp_path)
   monkeypatch.setattr(vitrina, "PAUSA_TRAS_FALLO", 0)      # las pruebas no necesitan esperar
   vitrina.LIMITADOR.reiniciar()
   yield tmp_path
@@ -56,7 +52,7 @@ def entorno(tmp_path, monkeypatch):
 
 
 def _abrir(carpeta, secretos):
-  at = AppTest.from_file(str(carpeta / "WishList.py"), default_timeout=60)
+  at = AppTest.from_file(str(carpeta / "python" / "interfaz" / "WishList.py"), default_timeout=60)
   for clave, valor in secretos.items():
     at.secrets[clave] = valor
   return at.run()
@@ -114,7 +110,7 @@ def test_el_error_dice_cuantos_caracteres_llegaron_para_detectar_pegados_raros(e
 
 
 def test_sin_contrasena_no_se_puede_guardar_nada(entorno, secretos):
-  decoy = entorno / "TablaWishList.xlsx"
+  decoy = excel_de_la_copia(entorno)
   guardar_excel(
     {"WishList": normalizar_wishlist(pd.DataFrame({"Articulo": ["SOLO-LOCAL"], "Costo Estimado": [1.0]})),
      "Perfil": pd.DataFrame([[1.0, 1.0, 1.0, 1.0, 1.0]], columns=COLUMNAS_PERFIL)},
@@ -182,7 +178,7 @@ def test_la_vitrina_ignora_un_excel_local_que_este_al_lado(entorno, secretos):
   guardar_excel(
     {"WishList": normalizar_wishlist(pd.DataFrame({"Articulo": ["SOLO-LOCAL"], "Costo Estimado": [1.0]})),
      "Perfil": pd.DataFrame([[1.0, 1.0, 1.0, 1.0, 1.0]], columns=COLUMNAS_PERFIL)},
-    entorno / "TablaWishList.xlsx",
+    excel_de_la_copia(entorno),
   )
 
   bloqueada = _abrir(entorno, secretos)
@@ -240,7 +236,7 @@ def test_datos_corruptos_dan_un_error_claro_y_se_queda_en_la_demostracion(entorn
 def test_el_texto_que_genera_preparar_vitrina_funciona_en_la_app_de_punta_a_punta(entorno):
   """Lo que el usuario pega en Streamlit (generado por texto_secretos) tiene que abrir la vitrina."""
   import tomllib
-  from vitrina import texto_secretos
+  from logica.vitrina import texto_secretos
 
   secretos_generados = tomllib.loads(texto_secretos(_excel_de_la_vitrina(entorno), CLAVE))
 

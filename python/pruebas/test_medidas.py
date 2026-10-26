@@ -3,9 +3,9 @@ import math
 
 import pandas as pd
 
-from datos_demo import hojas_demo
-from finanzas import analizar_wishlist, perfil_desde_hoja
-from medidas import calcular_medidas
+from logica.datos_demo import hojas_demo
+from logica.finanzas import analizar_wishlist, perfil_desde_hoja
+from logica.medidas import calcular_medidas
 
 HOY = pd.Timestamp("2026-10-01")
 

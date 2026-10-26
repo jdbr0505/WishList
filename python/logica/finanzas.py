@@ -13,7 +13,7 @@ from typing import NamedTuple
 import numpy as np
 import pandas as pd
 
-from datos_excel import COLUMNAS_PERFIL
+from logica.datos_excel import COLUMNAS_PERFIL
 
 # Regla 50/30/20 sobre el ingreso neto mensual
 PORC_NECESIDADES = 0.50

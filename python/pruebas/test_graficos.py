@@ -1,8 +1,8 @@
 import pandas as pd
 
-from datos_demo import hojas_demo
-from finanzas import Perfil, analizar_wishlist, perfil_desde_hoja
-from graficos import (
+from logica.datos_demo import hojas_demo
+from logica.finanzas import Perfil, analizar_wishlist, perfil_desde_hoja
+from dashboards.graficos import (
   COLORES_SEMAFORO, grafico_503020, grafico_costo_por_decision, grafico_costo_por_mes, grafico_meses_por_articulo,
   grafico_pendiente_por_tipo, grafico_plan_de_compras, grafico_ranking,
 )

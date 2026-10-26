@@ -3,8 +3,8 @@ import math
 import pandas as pd
 import pytest
 
-from datos_excel import COLUMNAS_PERFIL, normalizar_wishlist
-from finanzas import (
+from logica.datos_excel import COLUMNAS_PERFIL, normalizar_wishlist
+from logica.finanzas import (
   Perfil, agregar_analisis, analizar_wishlist, compromiso_mensual, decidir, deseos_disponibles,
   fecha_estimada, fondo_completo, margen_necesidades, perfil_desde_hoja,
   porcentaje_del_ingreso, presupuesto_503020, puntaje_prioridad,
@@ -186,8 +186,8 @@ def test_agregar_analisis_suma_una_hoja_y_cambia_infinitos_por_vacio(tmp_path):
 
 def test_el_excel_con_analisis_tiene_tres_tablas(tmp_path):
   import openpyxl
-  from datos_demo import hojas_demo
-  from datos_excel import guardar_excel
+  from logica.datos_demo import hojas_demo
+  from logica.datos_excel import guardar_excel
 
   ruta = tmp_path / "demo.xlsx"
   guardar_excel(agregar_analisis(hojas_demo()), ruta)

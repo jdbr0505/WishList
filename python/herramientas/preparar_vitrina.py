@@ -1,9 +1,9 @@
 """Prepara los secretos de la vitrina: tu Excel codificado + la huella de una contraseña.
 
 Uso (desde la carpeta del proyecto):
-  python preparar_vitrina.py             crea vitrina_secretos.toml
-  python preparar_vitrina.py --visible   igual, pero la contraseña se ve al escribirla (si la oculta da problemas)
-  python preparar_vitrina.py --probar    comprueba que una contraseña coincide con vitrina_secretos.toml
+  python python/herramientas/preparar_vitrina.py             crea vitrina_secretos.toml
+  python python/herramientas/preparar_vitrina.py --visible   igual, pero la contraseña se ve al escribirla (si la oculta da problemas)
+  python python/herramientas/preparar_vitrina.py --probar    comprueba que una contraseña coincide con vitrina_secretos.toml
 
 - Solo LEE TablaWishList.xlsx; nunca lo modifica.
 - Pide la contraseña (mínimo 12 caracteres) y la repite para confirmar.
@@ -16,14 +16,16 @@ import sys
 import tomllib
 from pathlib import Path
 
-from vitrina import (
+sys.path.insert(0, str(Path(__file__).resolve().parents[1]))   # para importar logica
+
+from logica.vitrina import (
   LONGITUD_MINIMA_CLAVE, faltantes_config, hojas_desde_b64, texto_secretos,
   tiene_caracteres_invisibles, verificar_clave,
 )
 
-CARPETA = Path(__file__).parent
-EXCEL = CARPETA / "TablaWishList.xlsx"
-SALIDA = CARPETA / "vitrina_secretos.toml"
+CARPETA_EXCEL = Path(__file__).resolve().parents[2] / "excel"
+EXCEL = CARPETA_EXCEL / "TablaWishList.xlsx"
+SALIDA = CARPETA_EXCEL / "vitrina_secretos.toml"      # tiene tus datos reales: git lo ignora y se borra tras pegarlo
 TAMANO_AVISO_KB = 200
 
 
@@ -76,7 +78,7 @@ def pedir_clave(visible: bool = False) -> str:
 
 def comprobar() -> None:
   if not SALIDA.exists():
-    sys.exit(f"No existe {SALIDA.name} (¿ya lo borraste?). Genera uno nuevo con: python preparar_vitrina.py")
+    sys.exit(f"No existe {SALIDA.name} (¿ya lo borraste?). Genera uno nuevo con: python python/herramientas/preparar_vitrina.py")
   clave = getpass.getpass("Contraseña a comprobar: ")
   print(f"Escribiste {describir_clave(clave)}.")
   print("COINCIDE con el archivo." if probar_clave(SALIDA, clave) else "NO coincide con el archivo.")

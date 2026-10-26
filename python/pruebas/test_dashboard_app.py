@@ -1,21 +1,16 @@
 """El Dashboard de la app replica las dos paginas del reporte de Power BI (Dashboard y Plan de compras)."""
-import shutil
-from pathlib import Path
-
 import pytest
 from streamlit.testing.v1 import AppTest
 
-RAIZ = Path(__file__).parent
-ARCHIVOS_APP = [p.name for p in RAIZ.glob("*.py") if not p.name.startswith("test_")]
+from ayudas import copiar_app
 
 
 @pytest.fixture
 def app(tmp_path, monkeypatch):
   """La app en modo demostracion (datos inventados), en una carpeta sin Excel real."""
-  for nombre in ARCHIVOS_APP:
-    shutil.copy(RAIZ / nombre, tmp_path / nombre)
+  script = copiar_app(tmp_path)
   monkeypatch.setenv("WISHLIST_SOLO_DEMO", "1")
-  return AppTest.from_file(str(tmp_path / "WishList.py"), default_timeout=60).run()
+  return AppTest.from_file(str(script), default_timeout=60).run()
 
 
 def _metricas(at):

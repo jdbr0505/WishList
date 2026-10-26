@@ -1,7 +1,7 @@
 """Datos de ejemplo para ver el dashboard sin tocar tu Excel real."""
 import pandas as pd
 
-from datos_excel import COLUMNAS_PERFIL, normalizar_wishlist
+from logica.datos_excel import COLUMNAS_PERFIL, normalizar_wishlist
 
 # (Articulo, Tipo, Costo Estimado, Estado, Urgencia, Valor, Frecuencia)
 _ARTICULOS = [

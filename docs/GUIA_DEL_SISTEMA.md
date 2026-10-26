@@ -9,7 +9,7 @@ Registrás artículos que querés comprar. El sistema calcula, con tus ingresos 
 Flujo de datos:
 
 ```
-Formulario (Streamlit)  ->  TablaWishList.xlsx  ->  finanzas.py  ->  App (Análisis y Dashboard)
+Formulario (Streamlit)  ->  excel/TablaWishList.xlsx  ->  finanzas.py  ->  App (Análisis y Dashboard)
                               |  hojas:                                 
                               |  WishList, Perfil, Analisis      ->  Excel (tablas dinámicas) y Power BI
 ```
@@ -18,18 +18,19 @@ Formulario (Streamlit)  ->  TablaWishList.xlsx  ->  finanzas.py  ->  App (Análi
 
 | Archivo | Para qué sirve | Herramienta |
 |---|---|---|
-| `WishList.py` | La interfaz: pestañas, formularios, gráficos | Streamlit |
-| `datos_excel.py` | Leer, limpiar y guardar el Excel | pandas, openpyxl |
-| `finanzas.py` | La lógica: 50/30/20, prioridad, semáforo | pandas, numpy |
-| `graficos.py` | Las figuras del dashboard | Plotly |
-| `medidas.py` | Las medidas de `powerbi/medidas.dax` en pandas (las tarjetas del dashboard) | pandas |
-| `datos_demo.py` | Datos de ejemplo (modo ejemplo) | pandas |
-| `exportar_demo.py` | Crea `powerbi/WishList_demo.xlsx` | pandas |
-| `test_*.py` | Pruebas automáticas | pytest |
-| `TablaWishList.xlsx` | Tu Excel central (el único que guardás) | Excel |
-| `ROADMAP.md` | Qué está hecho y qué falta | — |
+| `python/interfaz/WishList.py` | La interfaz: pestañas, formularios, gráficos | Streamlit |
+| `python/logica/datos_excel.py` | Leer, limpiar y guardar el Excel | pandas, openpyxl |
+| `python/logica/finanzas.py` | La lógica: 50/30/20, prioridad, semáforo | pandas, numpy |
+| `python/logica/medidas.py` | Las medidas de `powerbi/medidas.dax` en pandas (las tarjetas del dashboard) | pandas |
+| `python/logica/datos_demo.py` | Datos de ejemplo (modo ejemplo) | pandas |
+| `python/logica/acceso.py` · `vitrina.py` | Qué modo usa la app y la contraseña de la vitrina | hashlib |
+| `python/dashboards/graficos.py` | Las figuras del dashboard | Plotly |
+| `python/herramientas/` | `exportar_demo.py` (crea `powerbi/WishList_demo.xlsx`) y `preparar_vitrina.py` | pandas |
+| `python/pruebas/test_*.py` | Pruebas automáticas | pytest |
+| `excel/TablaWishList.xlsx` | Tu Excel central (el único que guardás) | Excel |
+| `docs/ROADMAP.md` | Qué está hecho y qué falta | — |
 
-Regla de diseño: la lógica (`finanzas.py`) no sabe nada de la interfaz. Por eso se prueba con `pytest` sin abrir la app.
+Regla de diseño: la lógica (`python/logica/finanzas.py`) no sabe nada de la interfaz. Por eso se prueba con `pytest` sin abrir la app.
 
 ## 3. Las tres hojas del Excel
 
@@ -99,9 +100,9 @@ Hábitos que te hacen mejor analista:
 ## 8. Cómo correr todo
 
 ```
-streamlit run WishList.py        # la app
-python -m pytest                 # las pruebas
-python exportar_demo.py          # regenera powerbi/WishList_demo.xlsx
+streamlit run python/interfaz/WishList.py        # la app
+python -m pytest python/pruebas  # las pruebas
+python python/herramientas/exportar_demo.py   # regenera powerbi/WishList_demo.xlsx
 ```
 
 Dentro de la app, el interruptor "Ver con datos de ejemplo" te deja explorar sin tocar tu Excel.

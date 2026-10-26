@@ -3,7 +3,7 @@ import numpy as np
 import pandas as pd
 import plotly.graph_objects as go
 
-from finanzas import (
+from logica.finanzas import (
   MESES_MAXIMO_ESPERA, PORC_AHORRO, PORC_DESEOS, PORC_NECESIDADES,
   Perfil, deseos_disponibles, fuera_de_alcance, margen_necesidades,
 )

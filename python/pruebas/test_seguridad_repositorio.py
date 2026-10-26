@@ -5,7 +5,7 @@ from pathlib import Path
 
 import pytest
 
-RAIZ = Path(__file__).parent
+RAIZ = Path(__file__).resolve().parents[2]        # raiz del proyecto (la carpeta con .git)
 
 
 def _git(*argumentos):
@@ -19,13 +19,13 @@ pytestmark = pytest.mark.skipif(
 
 @pytest.mark.parametrize("ruta", [
   ".streamlit/secrets.toml",
-  "vitrina_secretos.toml",
+  "excel/vitrina_secretos.toml",
   ".env",
   "mi-service-account-key.json",
   "client_secret_123.json",
-  "TablaWishList.xlsx",
-  "TablaWishList - copia.xlsx",
-  "WishList.xlsx",
+  "excel/TablaWishList.xlsx",
+  "excel/TablaWishList - copia.xlsx",
+  "excel/WishList.xlsx",
   "powerbi/WishList.pbix",
 ])
 def test_estos_archivos_los_ignora_git(ruta):

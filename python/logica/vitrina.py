@@ -20,7 +20,7 @@ from io import BytesIO
 
 import pandas as pd
 
-from datos_excel import preparar_hojas
+from logica.datos_excel import preparar_hojas
 
 LONGITUD_MINIMA_CLAVE = 12
 CAMPOS_SECRETOS = ("VITRINA_SAL", "VITRINA_HASH", "VITRINA_EXCEL_B64")

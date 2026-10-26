@@ -1,23 +1,27 @@
 #importar librerias necesarias para el sistema
 import os
+import sys
 import time
 from pathlib import Path
 import pandas as pd
 import streamlit as st
 
-import vitrina
-from acceso import MODO_DEMO, MODO_VITRINA, diagnosticar_archivo_secretos, elegir_modo
-from datos_excel import (
+# la app se lanza desde esta carpeta (python/interfaz): se agrega python/ para poder importar logica y dashboards
+sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
+
+from logica import vitrina
+from logica.acceso import MODO_DEMO, MODO_VITRINA, diagnosticar_archivo_secretos, elegir_modo
+from logica.datos_excel import (
   COLUMNAS_DINERO, COLUMNAS_PERFIL, ESTADOS, FRECUENCIAS, MONEDA, TIPOS, TIPOS_VALIDOS,
   cargar_datos, excel_en_bytes, filtrar_tabla, guardar_excel, preparar_edicion,
 )
-from datos_demo import hojas_demo
-from graficos import (
+from logica.datos_demo import hojas_demo
+from dashboards.graficos import (
   grafico_503020, grafico_costo_por_decision, grafico_costo_por_mes, grafico_meses_por_articulo,
   grafico_pendiente_por_tipo, grafico_plan_de_compras, grafico_ranking,
 )
-from medidas import calcular_medidas
-from finanzas import (
+from logica.medidas import calcular_medidas
+from logica.finanzas import (
   agregar_analisis, analizar_wishlist, deseos_disponibles, fondo_completo, margen_necesidades,
   meses_fondo_cubiertos, perfil_desde_hoja, presupuesto_503020,
 )
@@ -36,8 +40,9 @@ COLUMNAS_ANALISIS = [
   "Meses de Espera", "Fecha Estimada", "Semaforo", "Motivo",
 ]
 
-#ruta del archivo excel junto a este script (no depende de la carpeta desde donde se lance streamlit)
-archivo = Path(__file__).parent / "TablaWishList.xlsx"
+#ruta del Excel central: carpeta excel/ en la raiz del proyecto (no depende de la carpeta desde donde se lance streamlit)
+RAIZ_PROYECTO = Path(__file__).resolve().parents[2]
+archivo = RAIZ_PROYECTO / "excel" / "TablaWishList.xlsx"
 
 VALORES_SI = {"1", "true", "si", "sí", "yes"}
 
