@@ -19,6 +19,7 @@ pytestmark = pytest.mark.skipif(
 
 @pytest.mark.parametrize("ruta", [
   ".streamlit/secrets.toml",
+  "vitrina_secretos.toml",
   ".env",
   "mi-service-account-key.json",
   "client_secret_123.json",

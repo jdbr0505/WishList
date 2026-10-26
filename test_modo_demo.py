@@ -9,7 +9,7 @@ from streamlit.testing.v1 import AppTest
 
 RAIZ = Path(__file__).parent
 ARCHIVOS_APP = [
-  "WishList.py", "datos_excel.py", "finanzas.py", "graficos.py", "datos_demo.py", "acceso.py",
+  "WishList.py", "datos_excel.py", "finanzas.py", "graficos.py", "datos_demo.py", "acceso.py", "vitrina.py",
 ]
 ARTICULO_SECRETO = "ARTICULO-REAL-PRIVADO"
 

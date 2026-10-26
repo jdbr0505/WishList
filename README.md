@@ -11,19 +11,21 @@ Sistema para organizar y priorizar compras con la **regla 50/30/20**: registrás
 - Análisis con un **semáforo** (comprar ya, esperar, no conviene) y el motivo de cada decisión.
 - Dashboard con gráficos de Plotly. Reporte de Power BI incluido en `WishList.pbip`.
 
-## Dos formas de usarla
+## Tres formas de usarla
 
 | Modo | Dónde viven los datos | Cómo se activa |
 |---|---|---|
 | **Demostración** | Datos inventados, no guarda nada | Es el modo por defecto si no hay `TablaWishList.xlsx` |
 | **Local** | Un Excel en tu computadora | Tené `TablaWishList.xlsx` junto a `WishList.py`, o `WISHLIST_DATOS_REALES=1` |
+| **Vitrina** | Tus datos reales, solo lectura, detrás de una contraseña compartida | Secretos de la app publicada (ver [la guía](docs/VITRINA.md)) |
 
 Los datos reales nunca se suben a git (`.gitignore`).
 
 ### Desde el teléfono
 
-- **Mostrar el proyecto:** abrí la demostración en línea (enlace de arriba).
-- **Tus datos reales:** `TablaWishList.xlsx` está en OneDrive, así que con la app de Excel (o la de OneDrive) lo ves y lo editás desde el teléfono. La hoja `Analisis` (el semáforo) la recalcula la app cuando guardás desde la PC, no desde el teléfono. Evitá tener el archivo abierto en los dos lados a la vez.
+- **Mostrar el proyecto con datos inventados:** abrí la demostración en línea (enlace de arriba).
+- **Mostrar tus datos reales en el navegador:** la vitrina, con contraseña y en solo lectura. Hay que prepararla una vez y volver a prepararla cuando quieras actualizar los datos: [docs/VITRINA.md](docs/VITRINA.md).
+- **Ver o editar tu Excel:** `TablaWishList.xlsx` está en OneDrive, así que con la app de Excel (o la de OneDrive) lo ves y lo editás desde el teléfono. La hoja `Analisis` (el semáforo) la recalcula la app cuando guardás desde la PC, no desde el teléfono. Evitá tener el archivo abierto en los dos lados a la vez.
 
 ## Empezar
 
@@ -37,7 +39,7 @@ Para correr las pruebas: `pip install -r requirements-dev.txt` y luego `python -
 ## Documentación
 
 - [Guía del sistema](docs/GUIA_DEL_SISTEMA.md) · [Manual de ejercicios](docs/MANUAL_EJERCICIOS.md) · [Soluciones](docs/SOLUCIONES.md)
-- [Publicar la demostración](docs/DESPLIEGUE.md)
+- [Publicar la demostración](docs/DESPLIEGUE.md) · [Armar la vitrina con contraseña](docs/VITRINA.md)
 - [Guía de Power BI](powerbi/GUIA_POWER_BI.md) · [Hoja de ruta](ROADMAP.md)
 
 ## Estructura
@@ -47,6 +49,7 @@ Para correr las pruebas: `pip install -r requirements-dev.txt` y luego `python -
 | `WishList.py` | La interfaz (Streamlit) |
 | `finanzas.py` | La lógica: 50/30/20, prioridad y semáforo |
 | `datos_excel.py` | Leer, limpiar y guardar los datos |
-| `acceso.py` | Qué modo usa la app (demostración o local) |
+| `acceso.py` | Qué modo usa la app (demostración, local o vitrina) |
+| `vitrina.py` · `preparar_vitrina.py` | Contraseña, datos codificados y límite de intentos de la vitrina; y el script que arma sus secretos |
 | `graficos.py` · `datos_demo.py` | Gráficos y datos de ejemplo |
 | `test_*.py` | Pruebas automáticas (pytest) |

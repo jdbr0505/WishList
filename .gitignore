@@ -15,6 +15,7 @@ WishList.xlsx
 
 # SECRETOS (claves, contrasenas): nunca a git.
 .streamlit/secrets.toml
+vitrina_secretos.toml
 .env
 *service-account*.json
 *service_account*.json

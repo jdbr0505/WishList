@@ -7,14 +7,17 @@ from __future__ import annotations
 import tomllib
 from pathlib import Path
 
-MODO_DEMO = "demo"      # publica: datos inventados, no guarda nada
-MODO_LOCAL = "local"    # tu computadora: Excel local
+MODO_DEMO = "demo"          # publica: datos inventados, no guarda nada
+MODO_LOCAL = "local"        # tu computadora: Excel local
+MODO_VITRINA = "vitrina"    # tus datos reales de solo lectura, detras de una contrasena compartida
 
 
-def elegir_modo(solo_demo: bool, hay_excel_local: bool, datos_reales: bool) -> str:
+def elegir_modo(solo_demo: bool, vitrina: bool, hay_excel_local: bool, datos_reales: bool) -> str:
   """Decide el modo. La demostracion gana siempre; sin Excel ni permiso explicito, es demostracion."""
   if solo_demo:
     return MODO_DEMO
+  if vitrina:
+    return MODO_VITRINA
   if hay_excel_local or datos_reales:
     return MODO_LOCAL
   return MODO_DEMO

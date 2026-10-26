@@ -35,7 +35,8 @@ python -m pytest
 - **Tipo vacío pasa a "Sin clasificar" y Estado vacío a "Pendiente"** al cargar (decisión de Claude, se puede cambiar).
 - **Un gasto fuera de alcance** (que, solo, tardaría más de 6 meses) no bloquea la fila de espera de los gastos pequeños.
 - **Moneda: dólares (USD).** Todos los montos están en dólares. Los nombres de columna no cambian (así no se rompen el Excel ni Power BI): en la app se muestran como `$50.00` y en el Excel con formato de dólares. En Power BI hay que darle formato de moneda a las medidas (ver `powerbi/GUIA_POWER_BI.md`).
-- **Privacidad: la app real se queda en mi computadora.** No tiene contraseña y guarda en un Excel local. Lo único que se puede publicar es la demostración (`WISHLIST_SOLO_DEMO=1`), con datos inventados y sin acceso al Excel real. Los archivos con datos reales (`TablaWishList*.xlsx`, `WishList.xlsx`, `*.pbix`) están en `.gitignore`. Ver `docs/DESPLIEGUE.md`.
+- **Privacidad: la app que edita se queda en mi computadora.** El modo local no tiene contraseña y guarda en un Excel local. En la nube hay dos apps: la demostración (`WISHLIST_SOLO_DEMO=1`, datos inventados) y, si la armo, la **vitrina** (solo lectura, mis datos reales, contraseña compartida; los datos van en los secretos de Streamlit, nunca en git). Los archivos con datos reales (`TablaWishList*.xlsx`, `WishList.xlsx`, `*.pbix`, `vitrina_secretos.toml`) están en `.gitignore`. Ver `docs/DESPLIEGUE.md` y `docs/VITRINA.md`.
+- **Vitrina: una contraseña para todos, y se ve todo, incluido el perfil (ingreso, gastos, ahorro).** Lo elegí así (2026-10-26). Los datos son una foto del Excel del momento en que se prepara; para actualizarla se vuelve a correr `preparar_vitrina.py` y se pegan los secretos.
 - **Sin CSS ni HTML propios.** Streamlit genera la interfaz.
 - **Indentación:** una sola en todo el archivo (hoy 2 espacios). Mezclar niveles causó errores en la Fase 0.
 - **Power BI:** el proyecto es `WishList.pbip` (carpetas `WishList.Report` y `WishList.SemanticModel`). Hoy lee `powerbi/WishList_demo.xlsx`. Un `.pbip` no se crea desde cero: lo guarda Power BI Desktop. Claude no puede ver Desktop, así que la verificación visual es mía.
@@ -175,7 +176,10 @@ Objetivo: usar mis datos reales desde el teléfono sin encender la laptop.
 - [x] **Se eliminó del proyecto el 2026-10-26** (código, pruebas, guías y dependencias) para dejar todo con el Excel directo. Sigue recuperable en git: el último commit que la tiene es `e9a7dfb`.
 - [x] Desde el teléfono: veo o edito `TablaWishList.xlsx` con la app de Excel (OneDrive). La hoja `Analisis` la recalcula la app al guardar desde la PC.
 - [x] Para mostrar el proyecto: la demostración pública, con datos inventados.
-- [ ] Decidir si quiero una vitrina en el navegador con mis datos reales (ver abajo, "Vitrina").
+- [x] Decidí que sí quiero una vitrina en el navegador con mis datos reales: contraseña compartida, solo lectura, se ve todo (2026-10-26).
+- [x] Código de la vitrina listo y probado: `vitrina.py`, `preparar_vitrina.py`, modo `vitrina` en `acceso.py` y `WishList.py`, y 3 archivos de pruebas (incluye sabotajes: con el verificador siempre-verdadero o el limitador apagado, las pruebas fallan).
+- [ ] Armarla yo (guía: `docs/VITRINA.md`): elegir contraseña, correr `python preparar_vitrina.py`, crear la segunda app en Streamlit con esos secretos, probar clave mala y buena, y borrar `vitrina_secretos.toml`.
+- [ ] Cada vez que cambie mis datos y quiera que la vitrina los muestre: repetir `preparar_vitrina.py` y pegar los secretos nuevos.
 
 ## Calidad y hábitos (transversal)
 

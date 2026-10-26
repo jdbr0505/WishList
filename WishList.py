@@ -1,10 +1,12 @@
 #importar librerias necesarias para el sistema
 import os
+import time
 from pathlib import Path
 import pandas as pd
 import streamlit as st
 
-from acceso import MODO_DEMO, diagnosticar_archivo_secretos, elegir_modo
+import vitrina
+from acceso import MODO_DEMO, MODO_VITRINA, diagnosticar_archivo_secretos, elegir_modo
 from datos_excel import (
   COLUMNAS_DINERO, COLUMNAS_PERFIL, ESTADOS, FRECUENCIAS, MONEDA, TIPOS, TIPOS_VALIDOS,
   cargar_datos, excel_en_bytes, filtrar_tabla, guardar_excel, preparar_edicion,
@@ -53,13 +55,14 @@ def variable_activa(nombre):
 
 
 def modo_de_la_app():
-  """Decide entre demostracion y uso local (ver acceso.elegir_modo).
+  """Decide entre demostracion, vitrina de solo lectura y uso local (ver acceso.elegir_modo).
 
   Es seguro por defecto: sin TablaWishList.xlsx al lado y sin permiso explicito, es solo demostracion
   (en una app publicada el Excel no existe: esta ignorado por git).
   """
   return elegir_modo(
     solo_demo=variable_activa("WISHLIST_SOLO_DEMO"),
+    vitrina=valor_variable("WISHLIST_MODO").lower() == "vitrina",
     hay_excel_local=archivo.exists(),
     datos_reales=variable_activa("WISHLIST_DATOS_REALES"),
   )
@@ -92,6 +95,9 @@ def dinero(valor):
 
 def guardar(hojas_a_guardar):
   """Guarda todas las hojas en el Excel; devuelve True si salio bien (el Excel abierto da PermissionError)."""
+  if SOLO_LECTURA:
+    st.error("Esta vitrina es de solo lectura: no se puede modificar nada.")
+    return False
   if usar_demo:
     st.warning("Modo ejemplo: no se guarda nada en tu Excel. Apaga el modo ejemplo para guardar de verdad.")
     return False
@@ -104,6 +110,43 @@ def guardar(hojas_a_guardar):
   return True
 
 
+def preparar_vitrina():
+  """Vitrina de solo lectura: pide la contrasena ANTES de tocar ningun dato y devuelve las hojas.
+
+  Detiene la app (st.stop) si falta configuracion, si no se dio la contrasena o si hay demasiados intentos.
+  """
+  faltan = vitrina.faltantes_config(st.secrets)
+  if faltan:
+    st.error("La vitrina no está configurada del todo. Falta: " + ", ".join(faltan) + " (ver docs/VITRINA.md).")
+    st.stop()
+
+  if not st.session_state.get("vitrina_ok"):
+    st.info("Esta es una vitrina de solo lectura. Escribe la contraseña para ver los datos.")
+    with st.form("vitrina_clave"):
+      clave = st.text_input("Contraseña", type="password")
+      entrar = st.form_submit_button("Entrar")
+    if entrar:
+      ahora = time.time()
+      if vitrina.LIMITADOR.bloqueado(ahora):
+        st.error("Demasiados intentos fallidos. Espera unos minutos e inténtalo de nuevo.")
+      elif vitrina.verificar_clave(clave, st.secrets["VITRINA_SAL"], st.secrets["VITRINA_HASH"]):
+        st.session_state["vitrina_ok"] = True
+        st.rerun()
+      else:
+        vitrina.LIMITADOR.registrar_fallo(ahora)
+        time.sleep(vitrina.PAUSA_TRAS_FALLO)
+        st.error("Contraseña incorrecta.")
+    st.stop()
+
+  st.sidebar.info("Vitrina de solo lectura: no se puede modificar nada.")
+  st.sidebar.button("Salir", on_click=lambda: st.session_state.pop("vitrina_ok", None))
+  try:
+    return vitrina.hojas_desde_b64(st.secrets["VITRINA_EXCEL_B64"])
+  except Exception:  # no se muestra el detalle: podria incluir datos
+    st.error("No pude leer los datos de la vitrina. Revisa el secreto VITRINA_EXCEL_B64.")
+    st.stop()
+
+
 def valor_inicial(fila, columna):
   """Valor del perfil guardado para precargar el formulario (0.0 si no hay o esta vacio)."""
   if fila is None or pd.isna(fila[columna]):
@@ -112,6 +155,7 @@ def valor_inicial(fila, columna):
 
 
 modo = modo_de_la_app()
+SOLO_LECTURA = modo == MODO_VITRINA
 
 if modo == MODO_DEMO:
   # demostracion publica: el interruptor no existe, asi que no hay forma de pedir datos reales
@@ -120,6 +164,8 @@ if modo == MODO_DEMO:
   st.sidebar.info("Versión de demostración: los datos son inventados y no se guarda nada.")
   if not variable_activa("WISHLIST_SOLO_DEMO"):
     st.sidebar.caption("Para usar tus propios datos en tu equipo, define WISHLIST_DATOS_REALES=1 (ver docs/DESPLIEGUE.md).")
+elif modo == MODO_VITRINA:
+  usar_demo = False
 else:
   usar_demo = st.sidebar.toggle(
     "Ver con datos de ejemplo",
@@ -128,70 +174,82 @@ else:
   if usar_demo:
     st.sidebar.info("Modo ejemplo activo: lo que ves no son tus datos y no se guarda nada.")
 
-hojas = hojas_demo() if usar_demo else cargar_datos(archivo)
+if SOLO_LECTURA:
+  hojas = preparar_vitrina()      # si no se dio la contrasena, la app se detiene aqui
+elif usar_demo:
+  hojas = hojas_demo()
+else:
+  hojas = cargar_datos(archivo)
 df = hojas["WishList"]
 perfil = hojas["Perfil"]
 
-tab_articulos, tab_editar, tab_perfil, tab_analisis, tab_dashboard = st.tabs(
-  ["Artículos", "Editar lista", "Perfil financiero", "Análisis", "Dashboard"]
-)
+if SOLO_LECTURA:
+  tab_articulos, tab_perfil, tab_analisis, tab_dashboard = st.tabs(
+    ["Artículos", "Perfil financiero", "Análisis", "Dashboard"]
+  )
+  tab_editar = None
+else:
+  tab_articulos, tab_editar, tab_perfil, tab_analisis, tab_dashboard = st.tabs(
+    ["Artículos", "Editar lista", "Perfil financiero", "Análisis", "Dashboard"]
+  )
 
 with tab_articulos:
-  # Formulario de entrada para los campos
-  with st.form("entry_form", clear_on_submit=True):
+  if not SOLO_LECTURA:
+    # Formulario de entrada para los campos
+    with st.form("entry_form", clear_on_submit=True):
 
-    st.subheader("Nuevo Articulo")
-    col1, col2 = st.columns(2)
+      st.subheader("Nuevo Articulo")
+      col1, col2 = st.columns(2)
 
-    with col1:
-      articulo = st.text_input("Articulo", max_chars=100)
-      tipo = st.selectbox("Tipo", TIPOS)
-      frecuencia = st.selectbox("Frecuencia", FRECUENCIAS)
-      urgencia = st.slider("Urgencia (1 = puede esperar, 5 = ya)", 1, 5, 3)
-    with col2:
-      # value=None deja el campo vacio: vacio significa "por cotizar" (nunca se guarda 0)
-      costo_estimado = st.number_input(f"Costo Estimado ({MONEDA}, vacío = por cotizar)", value=None, min_value=0.0)
-      estado = st.selectbox("Estado", ESTADOS)
-      valor = st.slider("Valor percibido (1 = poco, 5 = mucho)", 1, 5, 3)
-      notas = st.text_area("Notas")
+      with col1:
+        articulo = st.text_input("Articulo", max_chars=100)
+        tipo = st.selectbox("Tipo", TIPOS)
+        frecuencia = st.selectbox("Frecuencia", FRECUENCIAS)
+        urgencia = st.slider("Urgencia (1 = puede esperar, 5 = ya)", 1, 5, 3)
+      with col2:
+        # value=None deja el campo vacio: vacio significa "por cotizar" (nunca se guarda 0)
+        costo_estimado = st.number_input(f"Costo Estimado ({MONEDA}, vacío = por cotizar)", value=None, min_value=0.0)
+        estado = st.selectbox("Estado", ESTADOS)
+        valor = st.slider("Valor percibido (1 = poco, 5 = mucho)", 1, 5, 3)
+        notas = st.text_area("Notas")
 
-    submit_button = st.form_submit_button(label="Guardar", width="stretch")
+      submit_button = st.form_submit_button(label="Guardar", width="stretch")
 
-    if submit_button:
-      nombre = articulo.strip()
+      if submit_button:
+        nombre = articulo.strip()
 
-      # Reunir todos los problemas antes de decidir si se guarda
-      errores = []
-      if nombre == "":
-        errores.append("Por favor, completa al menos el campo de Articulo.")
-      elif df["Articulo"].str.lower().eq(nombre.lower()).fillna(False).any():
-        errores.append(f"'{nombre}' ya está en la lista.")
-      if costo_estimado is not None and costo_estimado <= 0:
-        errores.append("Si aún no lo cotizaste, deja el costo vacío (no pongas 0).")
+        # Reunir todos los problemas antes de decidir si se guarda
+        errores = []
+        if nombre == "":
+          errores.append("Por favor, completa al menos el campo de Articulo.")
+        elif df["Articulo"].str.lower().eq(nombre.lower()).fillna(False).any():
+          errores.append(f"'{nombre}' ya está en la lista.")
+        if costo_estimado is not None and costo_estimado <= 0:
+          errores.append("Si aún no lo cotizaste, deja el costo vacío (no pongas 0).")
 
-      if errores:
-        for error in errores:
-          st.error(error)
-      else:
-        nuevo_articulo = pd.DataFrame([{
-            "Articulo": nombre,
-            "Tipo": tipo,
-            "Costo Estimado": float("nan") if costo_estimado is None else costo_estimado,
-            "Estado": estado,
-            "Notas": notas,
-            "Frecuencia": frecuencia,
-            "Urgencia": urgencia,
-            "Valor": valor,
-            "Fecha de alta": pd.Timestamp.today().normalize(),
-        }])
+        if errores:
+          for error in errores:
+            st.error(error)
+        else:
+          nuevo_articulo = pd.DataFrame([{
+              "Articulo": nombre,
+              "Tipo": tipo,
+              "Costo Estimado": float("nan") if costo_estimado is None else costo_estimado,
+              "Estado": estado,
+              "Notas": notas,
+              "Frecuencia": frecuencia,
+              "Urgencia": urgencia,
+              "Valor": valor,
+              "Fecha de alta": pd.Timestamp.today().normalize(),
+          }])
 
-        # Concatenar en una copia: df solo cambia si el guardado sale bien
-        df_actualizado = pd.concat([df, nuevo_articulo], ignore_index=True)
+          # Concatenar en una copia: df solo cambia si el guardado sale bien
+          df_actualizado = pd.concat([df, nuevo_articulo], ignore_index=True)
 
-        # se reenvian TODAS las hojas: lo que no se escribe se pierde
-        if guardar({**hojas, "WishList": df_actualizado}):
-          df = df_actualizado
-          st.success("¡Datos guardados exitosamente en el Excel!")
+          # se reenvian TODAS las hojas: lo que no se escribe se pierde
+          if guardar({**hojas, "WishList": df_actualizado}):
+            df = df_actualizado
+            st.success("¡Datos guardados exitosamente en el Excel!")
 
   # Visualización rápida de los datos actuales, con filtros (solo cambian lo que se ve, no los datos)
   st.divider()
@@ -205,82 +263,84 @@ with tab_articulos:
   st.caption(f"Mostrando {len(df_filtrado)} de {len(df)} artículos")
   st.dataframe(df_filtrado, width="stretch", column_config=CONFIG_DINERO)
 
-with tab_editar:
-  st.subheader("Editar lista")
-  st.caption(
-    "Cambia precios, estados o tipos directo en la tabla. Para borrar, marca la casilla de la fila "
-    "y pulsa Suprimir. Para agregar, escribe en la última fila. Nada se guarda hasta pulsar «Guardar cambios»."
-  )
-  # tras guardar se recarga la pagina; el mensaje se guarda en session_state para que sobreviva a la recarga
-  if "mensaje_editor" in st.session_state:
-    st.success(st.session_state.pop("mensaje_editor"))
+if not SOLO_LECTURA:
+  with tab_editar:
+    st.subheader("Editar lista")
+    st.caption(
+      "Cambia precios, estados o tipos directo en la tabla. Para borrar, marca la casilla de la fila "
+      "y pulsa Suprimir. Para agregar, escribe en la última fila. Nada se guarda hasta pulsar «Guardar cambios»."
+    )
+    # tras guardar se recarga la pagina; el mensaje se guarda en session_state para que sobreviva a la recarga
+    if "mensaje_editor" in st.session_state:
+      st.success(st.session_state.pop("mensaje_editor"))
 
-  # cambiar la clave reinicia el editor: asi no queda un "delta" viejo aplicado sobre datos ya guardados
-  version_editor = st.session_state.get("version_editor", 0)
-  editado = st.data_editor(
-    df,
-    key=f"editor_{version_editor}",
-    num_rows="dynamic",
-    hide_index=True,
-    width="stretch",
-    disabled=["Fecha de alta"],
-    column_config={
-      "Articulo": st.column_config.TextColumn("Articulo", required=True, max_chars=100),
-      "Tipo": st.column_config.SelectboxColumn("Tipo", options=TIPOS_VALIDOS),
-      "Costo Estimado": st.column_config.NumberColumn(
-        "Costo Estimado", min_value=0.0, format=FORMATO_DINERO, help=f"En dólares ({MONEDA}). Vacío = por cotizar"
-      ),
-      "Estado": st.column_config.SelectboxColumn("Estado", options=ESTADOS),
-      "Frecuencia": st.column_config.SelectboxColumn("Frecuencia", options=FRECUENCIAS),
-      "Urgencia": st.column_config.NumberColumn("Urgencia", min_value=1, max_value=5, step=1),
-      "Valor": st.column_config.NumberColumn("Valor", min_value=1, max_value=5, step=1),
-      "Fecha de alta": st.column_config.DateColumn("Fecha de alta"),
-    },
-  )
+    # cambiar la clave reinicia el editor: asi no queda un "delta" viejo aplicado sobre datos ya guardados
+    version_editor = st.session_state.get("version_editor", 0)
+    editado = st.data_editor(
+      df,
+      key=f"editor_{version_editor}",
+      num_rows="dynamic",
+      hide_index=True,
+      width="stretch",
+      disabled=["Fecha de alta"],
+      column_config={
+        "Articulo": st.column_config.TextColumn("Articulo", required=True, max_chars=100),
+        "Tipo": st.column_config.SelectboxColumn("Tipo", options=TIPOS_VALIDOS),
+        "Costo Estimado": st.column_config.NumberColumn(
+          "Costo Estimado", min_value=0.0, format=FORMATO_DINERO, help=f"En dólares ({MONEDA}). Vacío = por cotizar"
+        ),
+        "Estado": st.column_config.SelectboxColumn("Estado", options=ESTADOS),
+        "Frecuencia": st.column_config.SelectboxColumn("Frecuencia", options=FRECUENCIAS),
+        "Urgencia": st.column_config.NumberColumn("Urgencia", min_value=1, max_value=5, step=1),
+        "Valor": st.column_config.NumberColumn("Valor", min_value=1, max_value=5, step=1),
+        "Fecha de alta": st.column_config.DateColumn("Fecha de alta"),
+      },
+    )
 
-  if st.button("Guardar cambios", type="primary", key=f"guardar_editor_{version_editor}"):
-    lista_limpia, errores_edicion, cambios = preparar_edicion(df, editado)
-    hay_cambios = cambios["agregadas"] or cambios["borradas"] or cambios["modificadas"]
+    if st.button("Guardar cambios", type="primary", key=f"guardar_editor_{version_editor}"):
+      lista_limpia, errores_edicion, cambios = preparar_edicion(df, editado)
+      hay_cambios = cambios["agregadas"] or cambios["borradas"] or cambios["modificadas"]
 
-    if errores_edicion:
-      for error in errores_edicion:
-        st.error(error)
-    elif not hay_cambios:
-      st.info("No hay cambios para guardar.")
-    elif guardar({**hojas, "WishList": lista_limpia}):
-      mensaje = (
-        f"Cambios guardados. Filas modificadas: {cambios['modificadas']}, "
-        f"agregadas: {cambios['agregadas']}, borradas: {cambios['borradas']}."
-      )
-      if cambios["costos_en_cero"]:
-        mensaje += f" {cambios['costos_en_cero']} costos en 0 pasaron a «por cotizar» (vacío)."
-      st.session_state["mensaje_editor"] = mensaje
-      st.session_state["version_editor"] = version_editor + 1
-      st.rerun()
+      if errores_edicion:
+        for error in errores_edicion:
+          st.error(error)
+      elif not hay_cambios:
+        st.info("No hay cambios para guardar.")
+      elif guardar({**hojas, "WishList": lista_limpia}):
+        mensaje = (
+          f"Cambios guardados. Filas modificadas: {cambios['modificadas']}, "
+          f"agregadas: {cambios['agregadas']}, borradas: {cambios['borradas']}."
+        )
+        if cambios["costos_en_cero"]:
+          mensaje += f" {cambios['costos_en_cero']} costos en 0 pasaron a «por cotizar» (vacío)."
+        st.session_state["mensaje_editor"] = mensaje
+        st.session_state["version_editor"] = version_editor + 1
+        st.rerun()
 
 with tab_perfil:
   st.subheader("Perfil financiero")
   st.caption("Base de la regla 50/30/20: necesidades 50%, deseos 30%, ahorro 20% de tu ingreso neto.")
 
-  fila_actual = perfil.iloc[0] if not perfil.empty else None
+  if not SOLO_LECTURA:
+    fila_actual = perfil.iloc[0] if not perfil.empty else None
 
-  with st.form("perfil_form"):
-    valores = {
-        columna: st.number_input(
-            f"{columna} ({MONEDA})" if columna in COLUMNAS_DINERO else columna,
-            min_value=0.0,
-            value=valor_inicial(fila_actual, columna),
-        )
-        for columna in COLUMNAS_PERFIL
-    }
-    guardar_perfil = st.form_submit_button(label="Guardar perfil", width="stretch")
+    with st.form("perfil_form"):
+      valores = {
+          columna: st.number_input(
+              f"{columna} ({MONEDA})" if columna in COLUMNAS_DINERO else columna,
+              min_value=0.0,
+              value=valor_inicial(fila_actual, columna),
+          )
+          for columna in COLUMNAS_PERFIL
+      }
+      guardar_perfil = st.form_submit_button(label="Guardar perfil", width="stretch")
 
-  if guardar_perfil:
-    if valores["Ingreso Neto Mensual"] <= 0:
-      st.error("El ingreso neto mensual debe ser mayor que cero.")
-    elif guardar({**hojas, "Perfil": pd.DataFrame([valores])}):
-      st.success("Perfil guardado.")
-      perfil = pd.DataFrame([valores])
+    if guardar_perfil:
+      if valores["Ingreso Neto Mensual"] <= 0:
+        st.error("El ingreso neto mensual debe ser mayor que cero.")
+      elif guardar({**hojas, "Perfil": pd.DataFrame([valores])}):
+        st.success("Perfil guardado.")
+        perfil = pd.DataFrame([valores])
 
   st.dataframe(perfil, width="stretch", column_config=CONFIG_DINERO)
 
@@ -351,11 +411,12 @@ with tab_dashboard:
 
 # Descarga generada en memoria: usa los datos de esta ejecución (ya con lo guardado) sin leer el disco.
 # Va al final del script para ver el df y el perfil más recientes.
-with st.sidebar:
-  st.divider()
-  st.download_button(
-    label="📥 Descargar Excel de ejemplo" if usar_demo else "📥 Descargar Excel actualizado",
-    data=excel_en_bytes(agregar_analisis({**hojas, "WishList": df, "Perfil": perfil})),
-    file_name="WishList_ejemplo.xlsx" if usar_demo else archivo.name,
-    mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
-  )
+if not SOLO_LECTURA:
+  with st.sidebar:
+    st.divider()
+    st.download_button(
+      label="📥 Descargar Excel de ejemplo" if usar_demo else "📥 Descargar Excel actualizado",
+      data=excel_en_bytes(agregar_analisis({**hojas, "WishList": df, "Perfil": perfil})),
+      file_name="WishList_ejemplo.xlsx" if usar_demo else archivo.name,
+      mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+    )
