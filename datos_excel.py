@@ -166,7 +166,7 @@ def normalizar_perfil(datos):
 
 
 def preparar_hojas(hojas_leidas):
-  """Completa y limpia las hojas leidas de cualquier origen (Excel o Google Sheets).
+  """Completa y limpia las hojas leidas de cualquier origen (hoy, el Excel).
 
   Las hojas leidas pisan a las vacias; si falta alguna se usa la vacia.
   """

@@ -4,15 +4,10 @@ from pathlib import Path
 import pandas as pd
 import streamlit as st
 
-import almacenamiento
-from acceso import (
-  DENEGADO, MODO_DEMO, MODO_NUBE, SIN_SESION,
-  diagnosticar_archivo_secretos, elegir_modo, evaluar_acceso, faltantes_config_nube,
-)
-from almacenamiento import AlmacenExcel, AlmacenGoogleSheets, ErrorAlmacen
+from acceso import MODO_DEMO, diagnosticar_archivo_secretos, elegir_modo
 from datos_excel import (
   COLUMNAS_DINERO, COLUMNAS_PERFIL, ESTADOS, FRECUENCIAS, MONEDA, TIPOS, TIPOS_VALIDOS,
-  excel_en_bytes, filtrar_tabla, preparar_edicion, preparar_hojas,
+  cargar_datos, excel_en_bytes, filtrar_tabla, guardar_excel, preparar_edicion,
 )
 from datos_demo import hojas_demo
 from graficos import grafico_503020, grafico_plan_de_compras, grafico_ranking
@@ -58,15 +53,13 @@ def variable_activa(nombre):
 
 
 def modo_de_la_app():
-  """Decide entre demostracion, version privada en la nube o uso local (ver acceso.elegir_modo).
+  """Decide entre demostracion y uso local (ver acceso.elegir_modo).
 
   Es seguro por defecto: sin TablaWishList.xlsx al lado y sin permiso explicito, es solo demostracion
-  (en una app publicada el Excel no existe: esta ignorado por git). La version privada exige
-  WISHLIST_MODO=nube Y una configuracion completa de secretos con login de Google.
+  (en una app publicada el Excel no existe: esta ignorado por git).
   """
   return elegir_modo(
     solo_demo=variable_activa("WISHLIST_SOLO_DEMO"),
-    modo_nube=valor_variable("WISHLIST_MODO").lower() == "nube",
     hay_excel_local=archivo.exists(),
     datos_reales=variable_activa("WISHLIST_DATOS_REALES"),
   )
@@ -98,85 +91,17 @@ def dinero(valor):
 
 
 def guardar(hojas_a_guardar):
-  """Guarda todas las hojas en el almacen (Excel o Google Sheets); devuelve True si salio bien."""
+  """Guarda todas las hojas en el Excel; devuelve True si salio bien (el Excel abierto da PermissionError)."""
   if usar_demo:
     st.warning("Modo ejemplo: no se guarda nada en tu Excel. Apaga el modo ejemplo para guardar de verdad.")
     return False
   try:
     # la hoja Analisis se recalcula en cada guardado para que Excel y Power BI vean lo mismo que la app
-    almacen.guardar(agregar_analisis(hojas_a_guardar))
-  except ErrorAlmacen as error:
-    st.error(str(error))
+    guardar_excel(agregar_analisis(hojas_a_guardar), archivo)
+  except PermissionError:
+    st.error("El Excel está abierto o OneDrive lo bloquea. Ciérralo y vuelve a guardar.")
     return False
-  if modo == MODO_NUBE:
-    # en la nube lo recien guardado se conserva en la sesion para no volver a leer Google en cada clic
-    st.session_state["hojas_nube"] = preparar_hojas({n: hojas_a_guardar[n] for n in ("WishList", "Perfil")})
   return True
-
-
-def usuario_actual():
-  """Datos del login de Google en el formato que espera acceso.evaluar_acceso."""
-  return {
-    "is_logged_in": bool(st.user.get("is_logged_in", False)),
-    "email": st.user.get("email"),
-    "email_verified": st.user.get("email_verified"),
-  }
-
-
-def olvidar_datos_de_la_sesion():
-  """Borra de la sesion lo cargado de Google (al cerrar sesion o si entra otra cuenta)."""
-  for clave in ("hojas_nube", "almacen_nube"):
-    st.session_state.pop(clave, None)
-
-
-def preparar_modo_nube():
-  """Version privada: exige login de Google y correo autorizado ANTES de tocar ningun dato.
-
-  Devuelve el almacen de Google Sheets, o detiene la app (st.stop) si algo falta o no hay acceso.
-  """
-  faltan = faltantes_config_nube(st.secrets)
-  if faltan:
-    st.error("La versión privada no está configurada del todo. Falta: " + ", ".join(faltan) + " (ver docs/NUBE_PRIVADA.md).")
-    st.stop()
-
-  decision = evaluar_acceso(usuario_actual(), st.secrets.get("correos_permitidos"))
-  if decision == SIN_SESION:
-    olvidar_datos_de_la_sesion()
-    st.info("Esta es la versión privada de WishList. Inicia sesión con tu cuenta de Google para continuar.")
-    st.button("Iniciar sesión con Google", on_click=st.login)
-    st.stop()
-  if decision == DENEGADO:
-    olvidar_datos_de_la_sesion()
-    st.error("Esta cuenta no tiene acceso a esta aplicación.")
-    st.button("Cerrar sesión", on_click=st.logout)
-    st.stop()
-
-  if "almacen_nube" not in st.session_state:
-    try:
-      hoja_calculo = almacenamiento.abrir_hoja_calculo(
-        dict(st.secrets["gcp_service_account"]), st.secrets["gsheets"]["spreadsheet_id"]
-      )
-    except ErrorAlmacen as error:
-      st.error(str(error))
-      st.stop()
-    st.session_state["almacen_nube"] = AlmacenGoogleSheets(hoja_calculo)
-
-  st.sidebar.info("Versión privada: tus datos están en Google Sheets.")
-  st.sidebar.caption(f"Sesión: {st.user.get('email')}")
-  st.sidebar.button("Recargar desde Google Sheets", on_click=lambda: st.session_state.pop("hojas_nube", None))
-  st.sidebar.button("Cerrar sesión", on_click=st.logout)
-  return st.session_state["almacen_nube"]
-
-
-def cargar_hojas_nube(almacen_nube):
-  """Lee Google Sheets una sola vez por sesion (y tras 'Recargar'); un error detiene la app, nunca muestra vacio."""
-  if "hojas_nube" not in st.session_state:
-    try:
-      st.session_state["hojas_nube"] = almacen_nube.cargar()
-    except ErrorAlmacen as error:
-      st.error(str(error))
-      st.stop()
-  return st.session_state["hojas_nube"]
 
 
 def valor_inicial(fila, columna):
@@ -187,7 +112,6 @@ def valor_inicial(fila, columna):
 
 
 modo = modo_de_la_app()
-almacen = None
 
 if modo == MODO_DEMO:
   # demostracion publica: el interruptor no existe, asi que no hay forma de pedir datos reales
@@ -196,9 +120,6 @@ if modo == MODO_DEMO:
   st.sidebar.info("Versión de demostración: los datos son inventados y no se guarda nada.")
   if not variable_activa("WISHLIST_SOLO_DEMO"):
     st.sidebar.caption("Para usar tus propios datos en tu equipo, define WISHLIST_DATOS_REALES=1 (ver docs/DESPLIEGUE.md).")
-elif modo == MODO_NUBE:
-  usar_demo = False
-  almacen = preparar_modo_nube()      # si no hay login y acceso, la app se detiene aqui
 else:
   usar_demo = st.sidebar.toggle(
     "Ver con datos de ejemplo",
@@ -206,14 +127,8 @@ else:
   )
   if usar_demo:
     st.sidebar.info("Modo ejemplo activo: lo que ves no son tus datos y no se guarda nada.")
-  almacen = AlmacenExcel(archivo)
 
-if usar_demo:
-  hojas = hojas_demo()
-elif modo == MODO_NUBE:
-  hojas = cargar_hojas_nube(almacen)
-else:
-  hojas = almacen.cargar()
+hojas = hojas_demo() if usar_demo else cargar_datos(archivo)
 df = hojas["WishList"]
 perfil = hojas["Perfil"]
 
@@ -441,6 +356,6 @@ with st.sidebar:
   st.download_button(
     label="📥 Descargar Excel de ejemplo" if usar_demo else "📥 Descargar Excel actualizado",
     data=excel_en_bytes(agregar_analisis({**hojas, "WishList": df, "Perfil": perfil})),
-    file_name="WishList_ejemplo.xlsx" if usar_demo else ("WishList.xlsx" if modo == MODO_NUBE else archivo.name),
+    file_name="WishList_ejemplo.xlsx" if usar_demo else archivo.name,
     mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
   )

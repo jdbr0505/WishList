@@ -11,13 +11,12 @@ Sistema para organizar y priorizar compras con la **regla 50/30/20**: registrás
 - Análisis con un **semáforo** (comprar ya, esperar, no conviene) y el motivo de cada decisión.
 - Dashboard con gráficos de Plotly. Reporte de Power BI incluido en `WishList.pbip`.
 
-## Tres formas de usarla
+## Dos formas de usarla
 
 | Modo | Dónde viven los datos | Cómo se activa |
 |---|---|---|
 | **Demostración** | Datos inventados, no guarda nada | Es el modo por defecto si no hay `TablaWishList.xlsx` |
 | **Local** | Un Excel en tu computadora | Tené `TablaWishList.xlsx` junto a `WishList.py`, o `WISHLIST_DATOS_REALES=1` |
-| **Privada en la nube** | Una hoja de Google, con login de Google | `WISHLIST_MODO=nube` + secretos (guía: [docs/NUBE_PRIVADA.md](docs/NUBE_PRIVADA.md)) |
 
 Los datos reales nunca se suben a git (`.gitignore`).
 
@@ -38,7 +37,7 @@ Para correr las pruebas: `pip install -r requirements-dev.txt` y luego `python -
 ## Documentación
 
 - [Guía del sistema](docs/GUIA_DEL_SISTEMA.md) · [Manual de ejercicios](docs/MANUAL_EJERCICIOS.md) · [Soluciones](docs/SOLUCIONES.md)
-- [Publicar la demostración](docs/DESPLIEGUE.md) · [Versión privada en la nube](docs/NUBE_PRIVADA.md)
+- [Publicar la demostración](docs/DESPLIEGUE.md)
 - [Guía de Power BI](powerbi/GUIA_POWER_BI.md) · [Hoja de ruta](ROADMAP.md)
 
 ## Estructura
@@ -48,7 +47,6 @@ Para correr las pruebas: `pip install -r requirements-dev.txt` y luego `python -
 | `WishList.py` | La interfaz (Streamlit) |
 | `finanzas.py` | La lógica: 50/30/20, prioridad y semáforo |
 | `datos_excel.py` | Leer, limpiar y guardar los datos |
-| `almacenamiento.py` | Dónde se guardan: Excel local o Google Sheets |
-| `acceso.py` | Quién puede entrar y qué modo usa la app |
+| `acceso.py` | Qué modo usa la app (demostración o local) |
 | `graficos.py` · `datos_demo.py` | Gráficos y datos de ejemplo |
 | `test_*.py` | Pruebas automáticas (pytest) |

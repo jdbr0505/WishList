@@ -31,10 +31,6 @@ def test_estos_archivos_los_ignora_git(ruta):
   assert _git("check-ignore", "-q", ruta).returncode == 0, f"{ruta} deberia estar en .gitignore"
 
 
-def test_la_plantilla_de_secretos_si_se_puede_subir():
-  assert _git("check-ignore", "-q", ".streamlit/secrets.toml.example").returncode != 0
-
-
 def test_ningun_archivo_rastreado_contiene_claves_privadas_reales():
   rastreados = _git("ls-files").stdout.splitlines()
   clave_real = re.compile(r"-----BEGIN (RSA )?PRIVATE KEY-----[\\nA-Za-z0-9+/=\s]{200,}")
@@ -49,9 +45,3 @@ def test_ningun_archivo_rastreado_contiene_claves_privadas_reales():
       sospechosos.append(ruta)
   assert sospechosos == [], f"posibles secretos en archivos rastreados: {sospechosos}"
 
-
-def test_la_plantilla_no_tiene_valores_reales():
-  plantilla = (RAIZ / ".streamlit" / "secrets.toml.example").read_text(encoding="utf-8")
-
-  assert "xxxxxxxx" in plantilla and "tu-correo@gmail.com" in plantilla
-  assert not re.search(r"client_secret\s*=\s*\"GOCSPX", plantilla)
