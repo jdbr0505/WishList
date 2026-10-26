@@ -12,7 +12,11 @@ from datos_excel import (
   cargar_datos, excel_en_bytes, filtrar_tabla, guardar_excel, preparar_edicion,
 )
 from datos_demo import hojas_demo
-from graficos import grafico_503020, grafico_plan_de_compras, grafico_ranking
+from graficos import (
+  grafico_503020, grafico_costo_por_decision, grafico_costo_por_mes, grafico_meses_por_articulo,
+  grafico_pendiente_por_tipo, grafico_plan_de_compras, grafico_ranking,
+)
+from medidas import calcular_medidas
 from finanzas import (
   agregar_analisis, analizar_wishlist, deseos_disponibles, fondo_completo, margen_necesidades,
   meses_fondo_cubiertos, perfil_desde_hoja, presupuesto_503020,
@@ -69,7 +73,7 @@ def modo_de_la_app():
 
 # Configuración de la página
 st.set_page_config(
-    page_title="WishList", page_icon="📊", layout="centered"
+    page_title="WishList", page_icon="📊", layout="wide"
 )
 
 st.title("📝 WishList")
@@ -167,6 +171,97 @@ def abrir_vitrina():
   st.sidebar.info("Vitrina de solo lectura: no se puede modificar nada.")
   st.sidebar.button("Salir", on_click=salir_de_la_vitrina)
   return hojas_reales
+
+
+def opciones_de(tabla, columna):
+  """Valores distintos de una columna, para llenar un segmentador."""
+  return sorted(tabla[columna].dropna().unique())
+
+
+def tabla_para_mostrar(tabla, columnas):
+  """Las columnas elegidas, con el semaforo en iconos y los plazos infinitos como vacios.
+
+  `columnas` debe incluir "Semaforo" y "Meses de Espera".
+  """
+  return tabla[columnas].assign(
+    Semaforo=tabla["Semaforo"].map(ICONOS_SEMAFORO),
+    **{"Meses de Espera": tabla["Meses de Espera"].replace(float("inf"), float("nan"))},
+  )
+
+
+def porcentaje_o_guion(valor):
+  return "—" if pd.isna(valor) else f"{valor * 100:.0f}%"
+
+
+def pagina_resumen(analisis, perfil_actual):
+  """Pagina "Dashboard" del reporte de Power BI: 3 tarjetas, 2 graficos, meta contra real y una tabla."""
+  col_filtros, col_contenido = st.columns([1, 5])
+  with col_filtros:
+    tipos = st.multiselect("Tipo", opciones_de(analisis, "Tipo"), key="dash_tipo")
+    estados = st.multiselect("Estado", opciones_de(analisis, "Estado"), key="dash_estado")
+  filtrado = filtrar_tabla(analisis, {"Tipo": tipos, "Estado": estados})
+
+  with col_contenido:
+    if filtrado.empty:
+      st.info("No hay artículos con esos filtros.")
+      return
+    medidas = calcular_medidas(filtrado, perfil_actual.ingreso)
+    tarjeta_pendiente, tarjeta_mes, tarjeta_cotizar = st.columns(3)
+    tarjeta_pendiente.metric("Total Pendiente", dinero(medidas["Total Pendiente"]))
+    tarjeta_mes.metric("% de un Mes de Ingreso", porcentaje_o_guion(medidas["% de un Mes de Ingreso"]))
+    tarjeta_cotizar.metric("Por Cotizar", medidas["Por Cotizar"])
+
+    izquierda, derecha = st.columns(2)
+    izquierda.plotly_chart(grafico_costo_por_decision(filtrado), width="stretch")
+    derecha.plotly_chart(grafico_ranking(filtrado, limite=len(filtrado)), width="stretch")
+
+    meta_real, detalle = st.columns([2, 3])
+    meta_real.plotly_chart(grafico_503020(perfil_actual), width="stretch")      # no depende de los segmentadores
+    detalle.dataframe(
+      tabla_para_mostrar(
+        filtrado.sort_values("Articulo"), ["Articulo", "Costo Estimado", "Semaforo", "Motivo", "Meses de Espera"]
+      ),
+      width="stretch", hide_index=True, column_config=CONFIG_DINERO,
+    )
+
+
+def pagina_plan_de_compras(analisis, perfil_actual):
+  """Pagina "Plan de compras" del reporte de Power BI: 4 tarjetas, dona, 2 graficos y la tabla de detalle."""
+  col_filtros, col_contenido = st.columns([1, 5])
+  with col_filtros:
+    tipos = st.multiselect("Tipo", opciones_de(analisis, "Tipo"), key="plan_tipo")
+    semaforos = st.multiselect("Semáforo", list(ICONOS_SEMAFORO), format_func=ICONOS_SEMAFORO.get, key="plan_semaforo")
+  filtrado = filtrar_tabla(analisis, {"Tipo": tipos, "Semaforo": semaforos})
+
+  with col_filtros:
+    if not filtrado.empty:
+      st.plotly_chart(grafico_pendiente_por_tipo(filtrado), width="stretch")
+  with col_contenido:
+    if filtrado.empty:
+      st.info("No hay artículos con esos filtros.")
+      return
+    medidas = calcular_medidas(filtrado, perfil_actual.ingreso)
+    for tarjeta, nombre, etiqueta in zip(
+      st.columns(4),
+      ("Articulos Pendientes", "Comprar Ya", "Esperar", "No Conviene"),
+      ("Artículos Pendientes", "Comprar Ya", "Esperar", "No Conviene"),
+    ):
+      tarjeta.metric(etiqueta, medidas[nombre])
+    if not pd.isna(medidas["Plazo Maximo (meses)"]):
+      st.caption(f"Plazo para cumplir la lista: {int(medidas['Plazo Maximo (meses)'])} meses")
+
+    izquierda, derecha = st.columns(2)
+    izquierda.plotly_chart(grafico_meses_por_articulo(filtrado), width="stretch")
+    derecha.plotly_chart(grafico_costo_por_mes(filtrado), width="stretch")
+
+    st.subheader("Detalle por prioridad")
+    columnas = [
+      "Articulo", "Tipo", "Frecuencia", "Costo Estimado", "Puntaje", "Meses de Espera", "Fecha Estimada", "Semaforo", "Motivo",
+    ]
+    st.dataframe(
+      tabla_para_mostrar(filtrado.sort_values("Puntaje", ascending=False), columnas),
+      width="stretch", hide_index=True, column_config=CONFIG_DINERO,
+    )
 
 
 def valor_inicial(fila, columna):
@@ -404,35 +499,23 @@ with tab_analisis:
   )
   st.caption(f"Mostrando {len(analisis_filtrado)} de {len(analisis)} artículos")
 
-  vista = analisis_filtrado[COLUMNAS_ANALISIS].assign(
-    Semaforo=analisis_filtrado["Semaforo"].map(ICONOS_SEMAFORO),
-    **{"Meses de Espera": analisis_filtrado["Meses de Espera"].replace(float("inf"), float("nan"))},
+  st.dataframe(
+    tabla_para_mostrar(analisis_filtrado, COLUMNAS_ANALISIS),
+    width="stretch", hide_index=True, column_config=CONFIG_DINERO,
   )
-  st.dataframe(vista, width="stretch", hide_index=True, column_config=CONFIG_DINERO)
 
 with tab_dashboard:
   if not perfil_actual.completo:
     st.info("Completa tu perfil financiero para ver el dashboard.")
   else:
-    pendientes = analisis[analisis["Semaforo"] != "Comprado"]
-    con_precio = pendientes[pendientes["Costo Estimado"] > 0]
-    total_pendiente = con_precio["Costo Estimado"].sum()
-    plazos = pendientes["Meses de Espera"].replace(float("inf"), float("nan")).dropna()
-
-    k1, k2, k3, k4 = st.columns(4)
-    k1.metric("Pendiente (con precio)", dinero(total_pendiente))
-    k2.metric("% de un mes de ingreso", f"{total_pendiente / perfil_actual.ingreso * 100:.0f}%")
-    k3.metric("Plazo para cumplir la lista", f"{int(plazos.max())} meses" if not plazos.empty else "—")
-    k4.metric("Por cotizar", int((analisis["Semaforo"] == "Por cotizar").sum()))
-
-    cuenta = analisis["Semaforo"].value_counts()
-    st.caption(
-      "  ·  ".join(f"{ICONOS_SEMAFORO.get(nombre, nombre)}: {cantidad}" for nombre, cantidad in cuenta.items())
-    )
-
-    st.plotly_chart(grafico_503020(perfil_actual), width="stretch")
-    st.plotly_chart(grafico_ranking(analisis), width="stretch")
-    st.plotly_chart(grafico_plan_de_compras(analisis, perfil_actual), width="stretch")
+    st.caption("Mismo contenido que las páginas «Dashboard» y «Plan de compras» del reporte de Power BI (WishList.pbip).")
+    sub_resumen, sub_plan, sub_presupuesto = st.tabs(["Resumen", "Plan de compras", "Presupuesto acumulado"])
+    with sub_resumen:
+      pagina_resumen(analisis, perfil_actual)
+    with sub_plan:
+      pagina_plan_de_compras(analisis, perfil_actual)
+    with sub_presupuesto:
+      st.plotly_chart(grafico_plan_de_compras(analisis, perfil_actual), width="stretch")
 
 # Descarga generada en memoria: usa los datos de esta ejecución (ya con lo guardado) sin leer el disco.
 # Va al final del script para ver el df y el perfil más recientes.

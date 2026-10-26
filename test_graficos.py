@@ -2,7 +2,10 @@ import pandas as pd
 
 from datos_demo import hojas_demo
 from finanzas import Perfil, analizar_wishlist, perfil_desde_hoja
-from graficos import COLORES_SEMAFORO, grafico_503020, grafico_plan_de_compras, grafico_ranking
+from graficos import (
+  COLORES_SEMAFORO, grafico_503020, grafico_costo_por_decision, grafico_costo_por_mes, grafico_meses_por_articulo,
+  grafico_pendiente_por_tipo, grafico_plan_de_compras, grafico_ranking,
+)
 
 HOY = pd.Timestamp("2026-10-01")
 
@@ -55,6 +58,55 @@ def test_grafico_plan_de_compras_solo_pinta_compras_con_plazo():
   articulos_pintados = set(puntos["Compras: deseos"].hovertext) | set(puntos["Compras: necesidades"].hovertext)
   assert "Reloj digital" not in articulos_pintados  # sin precio
   assert "Pedalera" in articulos_pintados
+
+
+def test_costo_por_decision_suma_el_costo_de_cada_semaforo_de_mayor_a_menor():
+  analisis, _ = _demo()
+
+  figura = grafico_costo_por_decision(analisis)
+
+  # "Por cotizar" no tiene costos: no dibuja una barra vacia
+  assert list(figura.data[0].y) == ["No conviene", "Esperar", "Comprar ya", "Comprado"]
+  assert list(figura.data[0].x) == [3000, 507, 340, 23]
+  assert figura.data[0].marker.color[0] == COLORES_SEMAFORO["No conviene"]
+
+
+def test_pendiente_por_tipo_es_una_dona_con_el_total_pendiente_de_cada_tipo():
+  analisis, _ = _demo()
+
+  figura = grafico_pendiente_por_tipo(analisis)
+
+  assert figura.data[0].type == "pie" and figura.data[0].hole > 0
+  assert dict(zip(figura.data[0].labels, figura.data[0].values)) == {"Deseo": 3577, "Necesidad": 270}
+
+
+def test_meses_por_articulo_solo_muestra_los_que_tienen_plazo_y_el_mas_cercano_arriba():
+  analisis, _ = _demo()
+
+  figura = grafico_meses_por_articulo(analisis)
+
+  assert len(figura.data[0].y) == 10                        # sin precio y comprados no tienen plazo
+  assert list(figura.data[0].x) == sorted(figura.data[0].x)
+  assert figura.data[0].y[-1] == "Guitarra nueva"           # el de 10 meses queda al final
+  assert figura.layout.yaxis.autorange == "reversed"
+
+
+def test_costo_por_mes_agrupa_el_total_pendiente_por_mes_de_compra():
+  analisis, _ = _demo()
+
+  figura = grafico_costo_por_mes(analisis)
+
+  assert [str(x) for x in figura.data[0].x] == ["1", "2", "3", "10"]
+  assert list(figura.data[0].y) == [340, 327, 180, 3000]
+  assert sum(figura.data[0].y) == 3847
+
+
+def test_los_graficos_nuevos_aceptan_lista_vacia():
+  vacio, _ = _demo()
+  vacio = vacio.iloc[0:0]
+
+  for crear in (grafico_costo_por_decision, grafico_pendiente_por_tipo, grafico_meses_por_articulo, grafico_costo_por_mes):
+    assert crear(vacio) is not None
 
 
 def test_graficos_aceptan_lista_vacia():

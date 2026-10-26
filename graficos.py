@@ -17,6 +17,7 @@ COLORES_SEMAFORO = {
   "Clasificar": "#8a8f98",
   "Falta perfil": "#8a8f98",
 }
+GRIS_SEMAFORO = "#8a8f98"   # lo que no es comprar/esperar/descartar (igual que la medida Color Semaforo de Power BI)
 COLOR_META = "#9aa3b2"
 COLOR_REAL = "#3b6fd4"
 COLOR_DESEO = "#7b5cd6"
@@ -70,6 +71,70 @@ def grafico_ranking(analisis: pd.DataFrame, limite: int = 10) -> go.Figure:
   figura.update_yaxes(autorange="reversed")
   figura.update_xaxes(title="Puntaje de prioridad (0-100)", range=[0, 100])
   return _base(figura, "Ranking de prioridad (color = semáforo)")
+
+
+def _color_semaforo(semaforo: str) -> str:
+  return COLORES_SEMAFORO.get(semaforo, GRIS_SEMAFORO)
+
+
+def grafico_costo_por_decision(analisis: pd.DataFrame) -> go.Figure:
+  """Power BI "Costo por Decisión": costo total de cada semaforo, de mayor a menor (sin barras vacias)."""
+  costos = analisis.groupby("Semaforo")["Costo Estimado"].sum()
+  costos = costos[costos > 0].sort_values(ascending=False)
+
+  figura = go.Figure(go.Bar(
+    x=costos.values, y=costos.index, orientation="h",
+    marker_color=[_color_semaforo(s) for s in costos.index],
+    text=[f"${valor:,.0f}" for valor in costos.values],
+  ))
+  figura.update_yaxes(autorange="reversed")
+  figura.update_xaxes(title="Costo Total (USD)", tickprefix="$")
+  return _base(figura, "Costo por Decisión")
+
+
+def grafico_pendiente_por_tipo(analisis: pd.DataFrame) -> go.Figure:
+  """Power BI "Pendiente por tipo": dona con el total pendiente (sin los comprados) de cada tipo."""
+  pendientes = analisis[analisis["Semaforo"] != "Comprado"]
+  totales = pendientes.groupby("Tipo")["Costo Estimado"].sum()
+  totales = totales[totales > 0]
+  colores = {"Deseo": COLOR_DESEO, "Necesidad": COLOR_NECESIDAD}
+
+  figura = go.Figure(go.Pie(
+    labels=list(totales.index), values=list(totales.values), hole=0.5, sort=False,
+    marker=dict(colors=[colores.get(tipo, GRIS_SEMAFORO) for tipo in totales.index]),
+  ))
+  return _base(figura, "Pendiente por tipo")
+
+
+def _con_plazo(analisis: pd.DataFrame) -> pd.DataFrame:
+  """Articulos con un plazo en meses (sin precio, comprados y fuera de alcance no lo tienen)."""
+  return analisis[np.isfinite(analisis["Meses de Espera"].astype(float))]
+
+
+def grafico_meses_por_articulo(analisis: pd.DataFrame) -> go.Figure:
+  """Power BI "Meses de espera por artículo": el que se compra antes queda arriba."""
+  articulos = _con_plazo(analisis).sort_values("Meses de Espera", kind="stable")
+
+  figura = go.Figure(go.Bar(
+    x=articulos["Meses de Espera"], y=articulos["Articulo"], orientation="h", marker_color=COLOR_REAL,
+  ))
+  figura.update_yaxes(autorange="reversed")
+  figura.update_xaxes(title="Meses de espera")
+  return _base(figura, "Meses de espera por artículo")
+
+
+def grafico_costo_por_mes(analisis: pd.DataFrame) -> go.Figure:
+  """Power BI "Costo por mes de compra estimado": total pendiente que toca comprar cada mes."""
+  pendientes = _con_plazo(analisis[analisis["Semaforo"] != "Comprado"])
+  por_mes = pendientes.groupby("Meses de Espera")["Costo Estimado"].sum()
+
+  figura = go.Figure(go.Bar(
+    x=por_mes.index.astype(int), y=por_mes.values, marker_color=COLOR_REAL,
+    text=[f"${valor:,.0f}" for valor in por_mes.values],
+  ))
+  figura.update_xaxes(title="Mes de compra estimado", type="category")
+  figura.update_yaxes(title="Total Pendiente (USD)", tickprefix="$")
+  return _base(figura, "Costo por mes de compra estimado")
 
 
 def _puntos_de_compra(analisis: pd.DataFrame, tipo: str, aporte: float) -> pd.DataFrame:

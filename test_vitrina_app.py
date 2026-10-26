@@ -15,7 +15,7 @@ from datos_excel import COLUMNAS_PERFIL, guardar_excel, normalizar_wishlist
 from vitrina import codificar_excel, generar_clave_hash
 
 RAIZ = Path(__file__).parent
-ARCHIVOS_APP = ["WishList.py", "datos_excel.py", "finanzas.py", "graficos.py", "datos_demo.py", "acceso.py", "vitrina.py"]
+ARCHIVOS_APP = [p.name for p in RAIZ.glob("*.py") if not p.name.startswith("test_")]   # toda la app, sin olvidar modulos nuevos
 CLAVE = "clave-de-prueba-123"
 ARTICULO_REAL = "ARTICULO-DE-LA-VITRINA"
 ARTICULO_DEMO = "Guitarra nueva"          # viene de datos_demo.py
@@ -138,13 +138,25 @@ def test_la_contrasena_correcta_muestra_los_datos_en_solo_lectura(entorno, secre
 
   assert not at.exception
   assert ARTICULO_REAL in _texto_visible(at) and ARTICULO_DEMO not in _texto_visible(at)
-  assert [t.label for t in at.tabs] == ["Artículos", "Perfil financiero", "Análisis", "Dashboard"]   # sin "Editar lista"
+  etiquetas = [t.label for t in at.tabs]
+  assert etiquetas[:4] == ["Artículos", "Perfil financiero", "Análisis", "Dashboard"]   # sin "Editar lista"
+  assert "Editar lista" not in etiquetas
   assert not [b for b in at.button if "Guardar" in b.label]          # ni formularios ni botones para guardar
   assert not _campo_clave(at)                                        # ya no pide la contrasena
   assert len(at.text_input) == 2                                     # solo los buscadores, ningun campo para escribir datos
   assert not at.get("download_button")                               # tampoco se puede bajar el Excel
   assert any("solo lectura" in i.value for i in at.sidebar.info)
   assert not any("Demostración" in i.value for i in at.info)
+
+
+def test_el_dashboard_con_la_clave_muestra_los_numeros_reales_y_sin_ella_los_de_ejemplo(entorno, secretos):
+  bloqueada = _abrir(entorno, secretos)
+  abierta = _intentar(_abrir(entorno, secretos), CLAVE)
+
+  tarjetas = {m.label: m.value for m in abierta.metric}
+  assert {m.label: m.value for m in bloqueada.metric}["Total Pendiente"] == "$3,847"      # demostracion
+  assert tarjetas["Total Pendiente"] == "$70"                                              # 50 + 20 de los datos reales
+  assert tarjetas["% de un Mes de Ingreso"] == "37%"                                       # 70 / 190
 
 
 def test_con_la_clave_se_ve_todo_incluido_el_perfil_porque_asi_se_eligio(entorno, secretos):

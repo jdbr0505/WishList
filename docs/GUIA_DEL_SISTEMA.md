@@ -22,6 +22,7 @@ Formulario (Streamlit)  ->  TablaWishList.xlsx  ->  finanzas.py  ->  App (Análi
 | `datos_excel.py` | Leer, limpiar y guardar el Excel | pandas, openpyxl |
 | `finanzas.py` | La lógica: 50/30/20, prioridad, semáforo | pandas, numpy |
 | `graficos.py` | Las figuras del dashboard | Plotly |
+| `medidas.py` | Las medidas de `powerbi/medidas.dax` en pandas (las tarjetas del dashboard) | pandas |
 | `datos_demo.py` | Datos de ejemplo (modo ejemplo) | pandas |
 | `exportar_demo.py` | Crea `powerbi/WishList_demo.xlsx` | pandas |
 | `test_*.py` | Pruebas automáticas | pytest |

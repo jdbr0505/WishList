@@ -139,8 +139,12 @@ Verificación:
 - [x] Gráfico de plan de compras: presupuesto acumulado (línea) contra costo acumulado de cada compra (puntos).
 - [x] Colores con significado (`COLORES_SEMAFORO`): verde, amarillo y rojo igual que el semáforo, gris para lo que falta.
 - [x] Módulo `graficos.py` (Plotly, sin Streamlit) con tests en `test_graficos.py`.
+- [x] **El Dashboard de la app replica las dos páginas del reporte de Power BI** (2026-10-26): sub-pestaña «Resumen» (página Dashboard: tarjetas Total Pendiente, % de un Mes de Ingreso y Por Cotizar; Costo por Decisión; ranking; meta contra real; tabla) y «Plan de compras» (4 tarjetas, dona Pendiente por tipo, meses de espera por artículo, costo por mes, detalle por prioridad), con segmentadores de Tipo y Estado/Semáforo. El gráfico de presupuesto acumulado quedó en una tercera sub-pestaña. Funciona igual con los datos de ejemplo y con los reales (la vitrina).
+- [x] `medidas.py`: las medidas de `powerbi/medidas.dax` en pandas. `test_medidas.py` comprueba que con los datos de ejemplo dan los mismos números que la tabla de `powerbi/GUIA_POWER_BI.md` (12 pendientes, $3,847, 2 por cotizar, 256%, 3/6/1, 10 meses).
+- [x] Decisión: la página pasó a diseño ancho (`layout="wide"`) para que el dashboard tenga dos gráficos por fila, como en Power BI.
 - [ ] Revisar el dashboard con mis datos reales cuando tenga perfil y precios.
-- [ ] Ejercicio: agregar un gráfico de composición (por ejemplo, costo pendiente por tipo) y justificar por qué se elige ese tipo de gráfico.
+- [ ] Si cambio algo en el reporte de Power BI (una medida, un título, un gráfico), cambiarlo también en `medidas.py` / `graficos.py` para que sigan iguales.
+- [ ] Ejercicio: agregar un gráfico de composición (por ejemplo, costo pendiente por tipo) y justificar por qué se elige ese tipo de gráfico. (La dona «Pendiente por tipo» ya existe en `grafico_pendiente_por_tipo`: en su lugar, compárala con una barra apilada y decide cuál lee mejor.)
 
 ## Fase 5 — Excel y Power BI
 

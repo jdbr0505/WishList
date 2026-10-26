@@ -9,7 +9,7 @@ Sistema para organizar y priorizar compras con la **regla 50/30/20**: registrás
 - Formulario de artículos con tipo, costo, urgencia y valor, y una lista editable.
 - Perfil financiero (ingreso, gastos fijos, ahorro) y presupuesto 50/30/20.
 - Análisis con un **semáforo** (comprar ya, esperar, no conviene) y el motivo de cada decisión.
-- Dashboard con gráficos de Plotly. Reporte de Power BI incluido en `WishList.pbip`.
+- Dashboard con gráficos de Plotly que replica el reporte de Power BI (`WishList.pbip`): las páginas «Dashboard» y «Plan de compras», con las mismas medidas y los mismos números, tanto con datos de ejemplo como con los reales.
 
 ## Tres formas de usarla
 
@@ -51,5 +51,5 @@ Para correr las pruebas: `pip install -r requirements-dev.txt` y luego `python -
 | `datos_excel.py` | Leer, limpiar y guardar los datos |
 | `acceso.py` | Qué modo usa la app (demostración, local o vitrina) |
 | `vitrina.py` · `preparar_vitrina.py` | Contraseña, datos codificados y límite de intentos de la vitrina; y el script que arma sus secretos |
-| `graficos.py` · `datos_demo.py` | Gráficos y datos de ejemplo |
+| `graficos.py` · `medidas.py` · `datos_demo.py` | Gráficos, las medidas del reporte de Power BI en pandas y datos de ejemplo |
 | `test_*.py` | Pruebas automáticas (pytest) |

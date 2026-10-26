@@ -8,9 +8,7 @@ import pytest
 from streamlit.testing.v1 import AppTest
 
 RAIZ = Path(__file__).parent
-ARCHIVOS_APP = [
-  "WishList.py", "datos_excel.py", "finanzas.py", "graficos.py", "datos_demo.py", "acceso.py", "vitrina.py",
-]
+ARCHIVOS_APP = [p.name for p in RAIZ.glob("*.py") if not p.name.startswith("test_")]   # toda la app, sin olvidar modulos nuevos
 ARTICULO_SECRETO = "ARTICULO-REAL-PRIVADO"
 
 
