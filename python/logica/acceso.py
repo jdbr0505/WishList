@@ -9,7 +9,7 @@ from pathlib import Path
 
 MODO_DEMO = "demo"          # publica: datos inventados, no guarda nada
 MODO_LOCAL = "local"        # tu computadora: Excel local
-MODO_VITRINA = "vitrina"    # tus datos reales de solo lectura, detras de una contrasena compartida
+MODO_VITRINA = "vitrina"    # tus datos reales con todas las funciones, detras de tu contrasena
 
 
 def elegir_modo(solo_demo: bool, vitrina: bool, hay_excel_local: bool, datos_reales: bool) -> str:

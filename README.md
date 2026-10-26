@@ -17,14 +17,14 @@ Sistema para organizar y priorizar compras con la **regla 50/30/20**: registrás
 |---|---|---|
 | **Demostración** | Datos inventados, no guarda nada | Es el modo por defecto si no hay `excel/TablaWishList.xlsx` |
 | **Local** | Un Excel en tu computadora | Tené `excel/TablaWishList.xlsx`, o `WISHLIST_DATOS_REALES=1` |
-| **Vitrina** | La demostración para todos; con una contraseña compartida, tus datos reales en solo lectura (una sola página) | Secretos de la app publicada (ver [la guía](docs/VITRINA.md)) |
+| **Vitrina** | La demostración para todos; con tu contraseña, tus datos reales con todas las funciones (una sola página; los cambios viven en la sesión y se conservan descargando el Excel) | Secretos de la app publicada (ver [la guía](docs/VITRINA.md)) |
 
 Los datos reales nunca se suben a git (`.gitignore`).
 
 ### Desde el teléfono
 
 - **Mostrar el proyecto con datos inventados:** abrí la demostración en línea (enlace de arriba).
-- **Mostrar tus datos reales en el navegador:** la vitrina, en la misma página pública: arriba hay un recuadro de contraseña y, sin ella, se ve la demostración. Se prepara una vez y se vuelve a preparar cuando quieras actualizar los datos: [docs/VITRINA.md](docs/VITRINA.md).
+- **Mostrar tus datos reales en el navegador:** la vitrina, en la misma página pública: arriba hay un recuadro de contraseña y, sin ella, se ve la demostración; con ella puedes agregar y editar tus datos y descargar el Excel actualizado. Se prepara una vez y se vuelve a preparar cuando quieras actualizar los datos: [docs/VITRINA.md](docs/VITRINA.md).
 - **Ver o editar tu Excel:** `excel/TablaWishList.xlsx` está en OneDrive, así que con la app de Excel (o la de OneDrive) lo ves y lo editás desde el teléfono. La hoja `Analisis` (el semáforo) la recalcula la app cuando guardás desde la PC, no desde el teléfono. Evitá tener el archivo abierto en los dos lados a la vez.
 
 ## Empezar

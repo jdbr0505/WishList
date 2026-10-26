@@ -1,4 +1,5 @@
-"""Una sola pagina: sin contrasena se ve la demostracion; con la contrasena, tus datos reales en solo lectura.
+"""Una sola pagina: sin contrasena se ve la demostracion; con la contrasena, tus datos reales con todas las funciones
+(los cambios viven en la sesion y se conservan descargando el Excel).
 
 Se simula con AppTest (sin internet).
 """
@@ -129,20 +130,61 @@ def test_sin_contrasena_no_se_puede_guardar_nada(entorno, secretos):
 
 
 # ---------- con contrasena: tus datos reales ----------
-def test_la_contrasena_correcta_muestra_los_datos_en_solo_lectura(entorno, secretos):
+def test_la_contrasena_correcta_muestra_tus_datos_con_todas_las_funciones(entorno, secretos):
   at = _intentar(_abrir(entorno, secretos), CLAVE)
 
   assert not at.exception
   assert ARTICULO_REAL in _texto_visible(at) and ARTICULO_DEMO not in _texto_visible(at)
   etiquetas = [t.label for t in at.tabs]
-  assert etiquetas[:4] == ["Artículos", "Perfil financiero", "Análisis", "Dashboard"]   # sin "Editar lista"
-  assert "Editar lista" not in etiquetas
-  assert not [b for b in at.button if "Guardar" in b.label]          # ni formularios ni botones para guardar
+  assert etiquetas[:5] == ["Artículos", "Editar lista", "Perfil financiero", "Análisis", "Dashboard"]
+  assert [b for b in at.button if b.label == "Guardar"]              # formulario de articulos
+  assert [b for b in at.button if b.label == "Guardar perfil"]       # formulario del perfil
   assert not _campo_clave(at)                                        # ya no pide la contrasena
-  assert len(at.text_input) == 2                                     # solo los buscadores, ningun campo para escribir datos
-  assert not at.get("download_button")                               # tampoco se puede bajar el Excel
-  assert any("solo lectura" in i.value for i in at.sidebar.info)
+  assert [d.label for d in at.get("download_button")] == ["📥 Descargar Excel actualizado"]
+  assert any("solo mientras esta página esté abierta" in w.value for w in at.sidebar.warning)
   assert not any("Demostración" in i.value for i in at.info)
+
+
+def test_un_articulo_nuevo_se_guarda_en_la_sesion_y_actualiza_el_dashboard(entorno, secretos):
+  at = _intentar(_abrir(entorno, secretos), CLAVE)
+
+  [t for t in at.text_input if t.label == "Articulo"][0].set_value("Articulo agregado")
+  at.number_input[0].set_value(10.0)
+  [b for b in at.button if b.label == "Guardar"][0].click().run()
+
+  assert not at.exception
+  assert "Articulo agregado" in _texto_visible(at)
+  assert {m.label: m.value for m in at.metric}["Total Pendiente"] == "$80"      # 70 + 10
+
+
+def test_los_cambios_no_tocan_ningun_excel_ni_pasan_a_otra_sesion(entorno, secretos):
+  decoy = excel_de_la_copia(entorno)
+  guardar_excel(
+    {"WishList": normalizar_wishlist(pd.DataFrame({"Articulo": ["SOLO-LOCAL"], "Costo Estimado": [1.0]})),
+     "Perfil": pd.DataFrame([[1.0, 1.0, 1.0, 1.0, 1.0]], columns=COLUMNAS_PERFIL)},
+    decoy,
+  )
+  antes = _huella(decoy)
+  at = _intentar(_abrir(entorno, secretos), CLAVE)
+  [t for t in at.text_input if t.label == "Articulo"][0].set_value("Articulo agregado")
+  at.number_input[0].set_value(10.0)
+  [b for b in at.button if b.label == "Guardar"][0].click().run()
+
+  otra_sesion = _intentar(_abrir(entorno, secretos), CLAVE)
+
+  assert _huella(decoy) == antes                                      # el Excel de al lado quedo intacto
+  assert "Articulo agregado" not in _texto_visible(otra_sesion)       # nada se comparte entre sesiones
+  assert ARTICULO_REAL in _texto_visible(otra_sesion)
+
+
+def test_el_perfil_se_puede_cambiar_y_el_analisis_lo_usa(entorno, secretos):
+  at = _intentar(_abrir(entorno, secretos), CLAVE)
+
+  [n for n in at.number_input if n.label == "Ingreso Neto Mensual (USD)"][0].set_value(400.0)
+  [b for b in at.button if b.label == "Guardar perfil"][0].click().run()
+
+  assert not at.exception
+  assert "$200" in [m.value for m in at.metric]                       # 50% de 400
 
 
 def test_el_dashboard_con_la_clave_muestra_los_numeros_reales_y_sin_ella_los_de_ejemplo(entorno, secretos):
@@ -163,15 +205,20 @@ def test_con_la_clave_se_ve_todo_incluido_el_perfil_porque_asi_se_eligio(entorno
   assert "$95" in [m.value for m in at.metric]                       # 50% de un ingreso de 190
 
 
-def test_salir_vuelve_a_la_demostracion_y_a_pedir_la_contrasena(entorno, secretos):
+def test_salir_vuelve_a_la_demostracion_y_olvida_los_cambios_de_la_sesion(entorno, secretos):
   at = _intentar(_abrir(entorno, secretos), CLAVE)
-  assert ARTICULO_REAL in _texto_visible(at)
+  [t for t in at.text_input if t.label == "Articulo"][0].set_value("Articulo agregado")
+  at.number_input[0].set_value(10.0)
+  [b for b in at.button if b.label == "Guardar"][0].click().run()
+  assert "Articulo agregado" in _texto_visible(at)
 
   [b for b in at.sidebar.button if b.label == "Salir"][0].click()
   at.run()
-
   assert _es_la_demostracion(at)
   assert len(_campo_clave(at)) == 1
+
+  de_nuevo = _intentar(at, CLAVE)
+  assert "Articulo agregado" not in _texto_visible(de_nuevo)           # lo no descargado se perdio
 
 
 def test_la_vitrina_ignora_un_excel_local_que_este_al_lado(entorno, secretos):

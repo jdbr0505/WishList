@@ -1,4 +1,4 @@
-"""Vitrina de solo lectura protegida con una contrasena compartida.
+"""Sesion privada (modo vitrina): tus datos reales con todas las funciones, protegidos con una contrasena.
 
 La idea: mostrar tus datos reales en el navegador a quien le des la contrasena, sin guardar nada en git
 ni en un servidor propio. Los datos viajan como un texto (el Excel codificado en base64) dentro de los

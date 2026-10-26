@@ -1,8 +1,8 @@
 # Código de la app
 
-Todo el código es **una sola aplicación**: la misma página de Streamlit muestra la **demostración pública** (datos inventados) y, con contraseña, la **vitrina** (tus datos reales en solo lectura). Separar el código en una carpeta «Público» y otra «Vitrina» obligaría a copiar `finanzas.py`, `datos_excel.py` y casi todo lo demás en las dos, y cada arreglo habría que hacerlo dos veces. Por eso se ordena por **función**, y esta tabla dice a qué sección sirve cada archivo.
+Todo el código es **una sola aplicación**: la misma página de Streamlit muestra la **demostración pública** (datos inventados) y, con contraseña, la **sesión privada** (tus datos reales con todas las funciones; los cambios viven en la sesión). Separar el código en una carpeta «Público» y otra «Vitrina» obligaría a copiar `finanzas.py`, `datos_excel.py` y casi todo lo demás en las dos, y cada arreglo habría que hacerlo dos veces. Por eso se ordena por **función**, y esta tabla dice a qué sección sirve cada archivo.
 
-Secciones: **Ambas** = la usan la demostración y la vitrina. **Público** = solo la demostración. **Vitrina** = solo la vitrina. **Local** = solo cuando se usa en tu computadora con tu Excel.
+Secciones: **Ambas** = la usan la demostración y la vitrina. **Público** = solo la demostración. **Vitrina** = solo la sesión privada con contraseña (el modo se llama `vitrina` en el código). **Local** = solo cuando se usa en tu computadora con tu Excel.
 
 ## `interfaz/` — la página
 
@@ -42,7 +42,7 @@ Secciones: **Ambas** = la usan la demostración y la vitrina. **Público** = sol
 | `test_acceso.py` | Ambas | Qué modo se elige. |
 | `test_dashboard_app.py` | Ambas | Las páginas del dashboard dentro de la app. |
 | `test_modo_demo.py` | Público | La demostración nunca lee ni toca el Excel real. |
-| `test_vitrina.py`, `test_vitrina_app.py`, `test_preparar_vitrina.py` | Vitrina | Contraseña, bloqueo de intentos, solo lectura y el script de secretos. |
+| `test_vitrina.py`, `test_vitrina_app.py`, `test_preparar_vitrina.py` | Vitrina | Contraseña, bloqueo de intentos, sesión privada y el script de secretos. |
 | `test_seguridad_repositorio.py` | Ambas | Que los datos y secretos reales estén fuera de git. |
 | `test_publicacion.py` | Ambas | Que los dos archivos puente de la raíz (para Streamlit Cloud) sigan funcionando y al día. |
 | `conftest.py`, `ayudas.py` | — | Configuración y ayudas de las pruebas. |

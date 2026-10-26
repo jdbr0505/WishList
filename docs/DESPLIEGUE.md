@@ -11,7 +11,7 @@ La app real guarda tus finanzas en un Excel local y no tiene contraseña, así q
 - Los visitantes pueden recorrer todas las pestañas y descargar un Excel de ejemplo, pero no guardar.
 - Tres pruebas automáticas lo comprueban (`test_modo_demo.py`): no muestra el Excel real, no lo modifica aunque se intente guardar, y sin la variable la app funciona normal.
 
-> Si querés mostrar además tus **datos reales** (en solo lectura y con contraseña), se hace en esta misma página, cambiando sus secretos: ver [VITRINA.md](VITRINA.md). En ese caso hay que **quitar** el secreto `WISHLIST_SOLO_DEMO`, porque tiene prioridad y bloquearía la contraseña.
+> Si querés mostrar además tus **datos reales** (con contraseña y todas las funciones; ver VITRINA.md), se hace en esta misma página, cambiando sus secretos: ver [VITRINA.md](VITRINA.md). En ese caso hay que **quitar** el secreto `WISHLIST_SOLO_DEMO`, porque tiene prioridad y bloquearía la contraseña.
 
 ## Probarla en tu computadora antes de publicar
 
