@@ -44,6 +44,7 @@ Secciones: **Ambas** = la usan la demostración y la vitrina. **Público** = sol
 | `test_modo_demo.py` | Público | La demostración nunca lee ni toca el Excel real. |
 | `test_vitrina.py`, `test_vitrina_app.py`, `test_preparar_vitrina.py` | Vitrina | Contraseña, bloqueo de intentos, solo lectura y el script de secretos. |
 | `test_seguridad_repositorio.py` | Ambas | Que los datos y secretos reales estén fuera de git. |
+| `test_publicacion.py` | Ambas | Que los dos archivos puente de la raíz (para Streamlit Cloud) sigan funcionando y al día. |
 | `conftest.py`, `ayudas.py` | — | Configuración y ayudas de las pruebas. |
 
 ## Cómo se importa

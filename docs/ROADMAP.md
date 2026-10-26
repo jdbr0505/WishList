@@ -195,7 +195,8 @@ Orden pedido por mí, para que quien lea el código no se confunda. Una sola app
 - [x] `excel/` (mis libros reales, fuera de git), `powerbi/` (el `.pbip`, sus carpetas, consultas y medidas), `docs/` (guías, manual, hoja de ruta) y `requisitos/`.
 - [x] CI (`.github/workflows/python-app.yml`) y Codespaces (`.devcontainer/`) adaptados a las rutas nuevas.
 - [x] Eliminado `WishList.xlsx` (stub de 2 artículos); `WishList.pbix` (ignorado por git) se deja en `powerbi/` porque se modificó hoy.
-- [ ] Decidir cómo publicar con esta estructura (Streamlit Cloud solo busca `requirements.txt` en la raíz o junto al archivo principal, y no deja cambiar el archivo principal sin recrear la app). Ver `docs/DESPLIEGUE.md`.
+- [x] Publicación con esta estructura (decidido 2026-10-26): Streamlit Cloud solo busca `requirements.txt` en la raíz o junto al archivo principal, y no deja cambiar el archivo principal sin recrear la app. Se dejaron dos archivos puente en la raíz (`WishList.py` y `requirements.txt`) para no recrear la app ni perder sus secretos. Ver `docs/DESPLIEGUE.md`.
+- [ ] Comprobar en la página pública, después de subir, que sigue abriendo la demostración y la contraseña.
 - [ ] El modelo de Power BI lee `WishList_demo.xlsx` de otra carpeta (`...\Desktop\Python practicas\powerbi\`). Cambiar el origen a `powerbi/WishList_demo.xlsx` de este proyecto cuando abra el `.pbip` en su nueva ubicación.
 - [ ] Al terminar el proyecto: borrar todo lo relacionado con Claude (carpeta `.claude/`, menciones en el código y los documentos, y las guías que le piden cosas a Claude).
 

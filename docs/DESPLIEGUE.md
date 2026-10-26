@@ -31,11 +31,20 @@ Los menús pueden cambiar con el tiempo: usá esto como guía.
 2. Entrá a share.streamlit.io con tu cuenta de GitHub y autorizá el acceso a tu repositorio (es privado, así que hay que darle permiso).
 3. **Create app** y elegí:
    - Repositorio: `jdbr0505/WishList`, rama `main`.
-   - Archivo principal: `WishList.py`.
+   - Archivo principal: `WishList.py` (el puente de la raíz, ver abajo).
 4. En **Advanced settings**:
    - Python: 3.12 (es la versión con la que se probó el despliegue).
    - Secrets: escribí `WISHLIST_SOLO_DEMO = "1"`.
 5. **Deploy** y comprobá que aparece el aviso de demostración.
+
+### Por qué hay dos archivos en la raíz
+
+El código real vive en `python/`, pero Streamlit Community Cloud (1) solo busca `requirements.txt` en la raíz del repositorio o junto al archivo principal, y (2) no permite cambiar el archivo principal de una app ya creada sin borrarla y crearla de nuevo (según respuestas de su foro; no hay documentación oficial). Para no recrear la app publicada ni perder sus secretos, se dejan dos archivos puente en la raíz:
+
+- `WishList.py`: 3 líneas que ejecutan `python/interfaz/WishList.py`.
+- `requirements.txt`: copia de `requisitos/requirements.txt`. Si cambias uno, cambia el otro (`test_publicacion.py` falla si no coinciden).
+
+Si algún día recreas la app, puedes borrar los dos y apuntar a `python/interfaz/WishList.py` con un `requirements.txt` dentro de `python/interfaz/`.
 
 **Poné igual el secreto del paso 4.** Aunque la app ya es segura por defecto (sin Excel real arranca como demostración), el secreto lo deja explícito y evita depender de ese comportamiento automático.
 

@@ -56,6 +56,8 @@ WishList/
 ├── powerbi/         el proyecto de Power BI: WishList.pbip, consultas y medidas DAX
 ├── docs/            guías, manual de ejercicios y hoja de ruta
 ├── requisitos/      requirements.txt y requirements-dev.txt
+├── WishList.py      puente para Streamlit Cloud (ejecuta python/interfaz/WishList.py)
+├── requirements.txt copia de requisitos/requirements.txt, que Streamlit Cloud necesita en la raíz
 ├── .github/         pruebas automáticas en GitHub (CI)
 ├── .devcontainer/   entorno para Codespaces
 └── .vscode/         ajustes del editor
