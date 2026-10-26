@@ -35,7 +35,7 @@ python -m pytest
 - **Tipo vacío pasa a "Sin clasificar" y Estado vacío a "Pendiente"** al cargar (decisión de Claude, se puede cambiar).
 - **Un gasto fuera de alcance** (que, solo, tardaría más de 6 meses) no bloquea la fila de espera de los gastos pequeños.
 - **Moneda: dólares (USD).** Todos los montos están en dólares. Los nombres de columna no cambian (así no se rompen el Excel ni Power BI): en la app se muestran como `$50.00` y en el Excel con formato de dólares. En Power BI hay que darle formato de moneda a las medidas (ver `powerbi/GUIA_POWER_BI.md`).
-- **Privacidad: la app que edita se queda en mi computadora.** El modo local no tiene contraseña y guarda en un Excel local. En la nube hay dos apps: la demostración (`WISHLIST_SOLO_DEMO=1`, datos inventados) y, si la armo, la **vitrina** (solo lectura, mis datos reales, contraseña compartida; los datos van en los secretos de Streamlit, nunca en git). Los archivos con datos reales (`TablaWishList*.xlsx`, `WishList.xlsx`, `*.pbix`, `vitrina_secretos.toml`) están en `.gitignore`. Ver `docs/DESPLIEGUE.md` y `docs/VITRINA.md`.
+- **Privacidad: la app que edita se queda en mi computadora.** El modo local no tiene contraseña y guarda en un Excel local. En la nube hay una sola página: por defecto es la demostración (datos inventados) y, con la **vitrina** activada, una contraseña compartida desbloquea mis datos reales en solo lectura (los datos van en los secretos de Streamlit, nunca en git). Los archivos con datos reales (`TablaWishList*.xlsx`, `WishList.xlsx`, `*.pbix`, `vitrina_secretos.toml`) están en `.gitignore`. Ver `docs/DESPLIEGUE.md` y `docs/VITRINA.md`.
 - **Vitrina: una contraseña para todos, y se ve todo, incluido el perfil (ingreso, gastos, ahorro).** Lo elegí así (2026-10-26). Los datos son una foto del Excel del momento en que se prepara; para actualizarla se vuelve a correr `preparar_vitrina.py` y se pegan los secretos.
 - **Sin CSS ni HTML propios.** Streamlit genera la interfaz.
 - **Indentación:** una sola en todo el archivo (hoy 2 espacios). Mezclar niveles causó errores en la Fase 0.
@@ -178,7 +178,9 @@ Objetivo: usar mis datos reales desde el teléfono sin encender la laptop.
 - [x] Para mostrar el proyecto: la demostración pública, con datos inventados.
 - [x] Decidí que sí quiero una vitrina en el navegador con mis datos reales: contraseña compartida, solo lectura, se ve todo (2026-10-26).
 - [x] Código de la vitrina listo y probado: `vitrina.py`, `preparar_vitrina.py`, modo `vitrina` en `acceso.py` y `WishList.py`, y 3 archivos de pruebas (incluye sabotajes: con el verificador siempre-verdadero o el limitador apagado, las pruebas fallan).
-- [ ] Armarla yo (guía: `docs/VITRINA.md`): elegir contraseña, correr `python preparar_vitrina.py`, crear la segunda app en Streamlit con esos secretos, probar clave mala y buena, y borrar `vitrina_secretos.toml`.
+- [x] Decidí que sea **una sola página** (2026-10-26): sin contraseña (o con una mala) se ve la demostración con datos inventados; con la contraseña correcta, mis datos reales en solo lectura. Nada de segunda app.
+- [x] Corrí `python preparar_vitrina.py` y generé `vitrina_secretos.toml`.
+- [ ] Pegar ese contenido en Settings > Secrets de la app `wishlistjd` (reemplazando lo que haya y quitando `WISHLIST_SOLO_DEMO`), probar clave mala y buena, y borrar `vitrina_secretos.toml` (guía: `docs/VITRINA.md`).
 - [ ] Cada vez que cambie mis datos y quiera que la vitrina los muestre: repetir `preparar_vitrina.py` y pegar los secretos nuevos.
 
 ## Calidad y hábitos (transversal)

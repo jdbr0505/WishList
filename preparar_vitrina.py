@@ -58,7 +58,8 @@ def main() -> None:
   if resumen["kb"] > TAMANO_AVISO_KB:
     print(f"AVISO: el texto pesa más de {TAMANO_AVISO_KB} KB; Streamlit podría rechazarlo.")
   print(f"Se creó {SALIDA.name}. Siguiente paso: ábrelo, copia TODO su contenido y pégalo en Streamlit,")
-  print("Settings > Secrets de la app de la vitrina. Después borra ese archivo (tiene tus datos reales).")
+  print("Settings > Secrets de tu app (reemplaza lo que haya, incluido WISHLIST_SOLO_DEMO).")
+  print("Después borra ese archivo (tiene tus datos reales).")
   print("La contraseña no se guardó en ningún lado: solo su huella. Guárdala tú en un lugar seguro.")
 
 

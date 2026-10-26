@@ -110,41 +110,62 @@ def guardar(hojas_a_guardar):
   return True
 
 
-def preparar_vitrina():
-  """Vitrina de solo lectura: pide la contrasena ANTES de tocar ningun dato y devuelve las hojas.
-
-  Detiene la app (st.stop) si falta configuracion, si no se dio la contrasena o si hay demasiados intentos.
-  """
-  faltan = vitrina.faltantes_config(st.secrets)
-  if faltan:
-    st.error("La vitrina no está configurada del todo. Falta: " + ", ".join(faltan) + " (ver docs/VITRINA.md).")
-    st.stop()
-
-  if not st.session_state.get("vitrina_ok"):
-    st.info("Esta es una vitrina de solo lectura. Escribe la contraseña para ver los datos.")
+def pedir_contrasena_vitrina():
+  """Formulario de contrasena para ver los datos reales. Devuelve True solo si la clave es correcta."""
+  hubo_intento = st.session_state.get("vitrina_intento", False)
+  with st.expander("🔒 Ver mis datos reales (con contraseña)", expanded=hubo_intento):
     with st.form("vitrina_clave"):
       clave = st.text_input("Contraseña", type="password")
       entrar = st.form_submit_button("Entrar")
-    if entrar:
-      ahora = time.time()
-      if vitrina.LIMITADOR.bloqueado(ahora):
-        st.error("Demasiados intentos fallidos. Espera unos minutos e inténtalo de nuevo.")
-      elif vitrina.verificar_clave(clave, st.secrets["VITRINA_SAL"], st.secrets["VITRINA_HASH"]):
-        st.session_state["vitrina_ok"] = True
-        st.rerun()
-      else:
-        vitrina.LIMITADOR.registrar_fallo(ahora)
-        time.sleep(vitrina.PAUSA_TRAS_FALLO)
-        st.error("Contraseña incorrecta.")
-    st.stop()
+  if not entrar:
+    return False
+
+  st.session_state["vitrina_intento"] = True
+  ahora = time.time()
+  if vitrina.LIMITADOR.bloqueado(ahora):
+    st.error("Demasiados intentos fallidos. Espera unos minutos e inténtalo de nuevo.")
+    return False
+  if vitrina.verificar_clave(clave, st.secrets["VITRINA_SAL"], st.secrets["VITRINA_HASH"]):
+    return True
+  vitrina.LIMITADOR.registrar_fallo(ahora)
+  time.sleep(vitrina.PAUSA_TRAS_FALLO)
+  st.error("Contraseña incorrecta.")
+  return False
+
+
+def salir_de_la_vitrina():
+  """Olvida el acceso de esta sesion: la pagina vuelve a la demostracion."""
+  st.session_state.pop("vitrina_ok", None)
+  st.session_state.pop("vitrina_intento", None)
+
+
+def abrir_vitrina():
+  """Una sola pagina: devuelve las hojas REALES si se dio la contrasena, o None (y se muestra la demostracion).
+
+  Los datos reales no se decodifican hasta que la contrasena es correcta. Si algo falla (configuracion
+  incompleta, datos ilegibles) nunca se muestran datos reales: se queda la demostracion y se avisa.
+  """
+  faltan = vitrina.faltantes_config(st.secrets)
+  if faltan:
+    st.warning("La vitrina no está configurada del todo (falta: " + ", ".join(faltan) + "), así que se muestra la demostración. Ver docs/VITRINA.md.")
+    return None
+
+  if not st.session_state.get("vitrina_ok"):
+    if not pedir_contrasena_vitrina():
+      return None
+    st.session_state["vitrina_ok"] = True
+    st.rerun()      # vuelve a dibujar la pagina ya con los datos reales (y sin el formulario)
+
+  try:
+    hojas_reales = vitrina.hojas_desde_b64(st.secrets["VITRINA_EXCEL_B64"])
+  except Exception:  # no se muestra el detalle: podria incluir datos
+    st.session_state.pop("vitrina_ok", None)
+    st.error("No pude leer los datos de la vitrina. Revisa el secreto VITRINA_EXCEL_B64. Se muestra la demostración.")
+    return None
 
   st.sidebar.info("Vitrina de solo lectura: no se puede modificar nada.")
-  st.sidebar.button("Salir", on_click=lambda: st.session_state.pop("vitrina_ok", None))
-  try:
-    return vitrina.hojas_desde_b64(st.secrets["VITRINA_EXCEL_B64"])
-  except Exception:  # no se muestra el detalle: podria incluir datos
-    st.error("No pude leer los datos de la vitrina. Revisa el secreto VITRINA_EXCEL_B64.")
-    st.stop()
+  st.sidebar.button("Salir", on_click=salir_de_la_vitrina)
+  return hojas_reales
 
 
 def valor_inicial(fila, columna):
@@ -155,17 +176,20 @@ def valor_inicial(fila, columna):
 
 
 modo = modo_de_la_app()
-SOLO_LECTURA = modo == MODO_VITRINA
 
-if modo == MODO_DEMO:
-  # demostracion publica: el interruptor no existe, asi que no hay forma de pedir datos reales
+# Vitrina = una sola pagina: sin la contrasena se ve la demostracion; con ella, los datos reales en solo lectura
+hojas_reales_vitrina = abrir_vitrina() if modo == MODO_VITRINA else None
+SOLO_LECTURA = hojas_reales_vitrina is not None
+
+if SOLO_LECTURA:
+  usar_demo = False
+elif modo in (MODO_DEMO, MODO_VITRINA):
+  # demostracion publica: el interruptor no existe, asi que no hay forma de pedir datos reales sin la contrasena
   usar_demo = True
   st.info("Demostración con datos inventados. Aquí no se guarda nada; puedes explorar todas las pestañas.")
   st.sidebar.info("Versión de demostración: los datos son inventados y no se guarda nada.")
-  if not variable_activa("WISHLIST_SOLO_DEMO"):
+  if modo == MODO_DEMO and not variable_activa("WISHLIST_SOLO_DEMO"):
     st.sidebar.caption("Para usar tus propios datos en tu equipo, define WISHLIST_DATOS_REALES=1 (ver docs/DESPLIEGUE.md).")
-elif modo == MODO_VITRINA:
-  usar_demo = False
 else:
   usar_demo = st.sidebar.toggle(
     "Ver con datos de ejemplo",
@@ -175,7 +199,7 @@ else:
     st.sidebar.info("Modo ejemplo activo: lo que ves no son tus datos y no se guarda nada.")
 
 if SOLO_LECTURA:
-  hojas = preparar_vitrina()      # si no se dio la contrasena, la app se detiene aqui
+  hojas = hojas_reales_vitrina
 elif usar_demo:
   hojas = hojas_demo()
 else:

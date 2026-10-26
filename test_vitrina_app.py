@@ -1,4 +1,8 @@
-"""La vitrina dentro de la app: solo lectura, protegida con contrasena. Se simula con AppTest (sin internet)."""
+"""Una sola pagina: sin contrasena se ve la demostracion; con la contrasena, tus datos reales en solo lectura.
+
+Se simula con AppTest (sin internet).
+"""
+import hashlib
 import shutil
 from pathlib import Path
 
@@ -14,6 +18,7 @@ RAIZ = Path(__file__).parent
 ARCHIVOS_APP = ["WishList.py", "datos_excel.py", "finanzas.py", "graficos.py", "datos_demo.py", "acceso.py", "vitrina.py"]
 CLAVE = "clave-de-prueba-123"
 ARTICULO_REAL = "ARTICULO-DE-LA-VITRINA"
+ARTICULO_DEMO = "Guitarra nueva"          # viene de datos_demo.py
 
 
 def _excel_de_la_vitrina(carpeta):
@@ -57,8 +62,12 @@ def _abrir(carpeta, secretos):
   return at.run()
 
 
+def _campo_clave(at):
+  return [t for t in at.text_input if t.label == "Contraseña"]
+
+
 def _intentar(at, clave):
-  at.text_input[0].set_value(clave)
+  _campo_clave(at)[0].set_value(clave)
   [b for b in at.button if b.label == "Entrar"][0].click()
   return at.run()
 
@@ -67,35 +76,69 @@ def _texto_visible(at):
   return " ".join(str(df.value.to_dict()) for df in at.dataframe) + " ".join(m.value for m in at.metric)
 
 
-def test_sin_contrasena_no_se_ve_ningun_dato(entorno, secretos):
+def _huella(ruta):
+  return hashlib.sha256(ruta.read_bytes()).hexdigest()
+
+
+def _es_la_demostracion(at):
+  return ARTICULO_DEMO in _texto_visible(at) and ARTICULO_REAL not in _texto_visible(at)
+
+
+# ---------- sin contrasena: la demostracion ----------
+def test_sin_contrasena_se_abre_la_demostracion_y_ningun_dato_real(entorno, secretos):
   at = _abrir(entorno, secretos)
 
   assert not at.exception
-  assert any("solo lectura" in i.value for i in at.info)
-  assert at.text_input[0].label == "Contraseña"
-  assert len(at.dataframe) == 0 and len(at.metric) == 0 and ARTICULO_REAL not in _texto_visible(at)
+  assert _es_la_demostracion(at)
+  assert any("Demostración" in i.value for i in at.info)
+  assert "$750" in [m.value for m in at.metric]                 # 50% del ingreso inventado (1500)
+  assert "$95" not in [m.value for m in at.metric]              # nada del perfil real
+  assert len(_campo_clave(at)) == 1                             # y hay donde escribir la contrasena
 
 
-def test_una_contrasena_incorrecta_no_deja_pasar(entorno, secretos):
+def test_una_contrasena_incorrecta_no_deja_pasar_y_sigue_la_demostracion(entorno, secretos):
   at = _intentar(_abrir(entorno, secretos), "contrasena-equivocada")
 
+  assert not at.exception
   assert any("incorrecta" in e.value for e in at.error)
-  assert len(at.dataframe) == 0 and ARTICULO_REAL not in _texto_visible(at)
+  assert _es_la_demostracion(at)
 
 
+def test_sin_contrasena_no_se_puede_guardar_nada(entorno, secretos):
+  decoy = entorno / "TablaWishList.xlsx"
+  guardar_excel(
+    {"WishList": normalizar_wishlist(pd.DataFrame({"Articulo": ["SOLO-LOCAL"], "Costo Estimado": [1.0]})),
+     "Perfil": pd.DataFrame([[1.0, 1.0, 1.0, 1.0, 1.0]], columns=COLUMNAS_PERFIL)},
+    decoy,
+  )
+  antes = _huella(decoy)
+  at = _abrir(entorno, secretos)
+
+  [t for t in at.text_input if t.label == "Articulo"][0].set_value("Articulo nuevo")
+  at.number_input[0].set_value(10.0)
+  [b for b in at.button if b.label == "Guardar"][0].click().run()
+
+  assert any("no se guarda nada" in w.value for w in at.warning)
+  assert _huella(decoy) == antes
+  assert "SOLO-LOCAL" not in _texto_visible(at)
+
+
+# ---------- con contrasena: tus datos reales ----------
 def test_la_contrasena_correcta_muestra_los_datos_en_solo_lectura(entorno, secretos):
   at = _intentar(_abrir(entorno, secretos), CLAVE)
 
   assert not at.exception
-  assert ARTICULO_REAL in _texto_visible(at)
+  assert ARTICULO_REAL in _texto_visible(at) and ARTICULO_DEMO not in _texto_visible(at)
   assert [t.label for t in at.tabs] == ["Artículos", "Perfil financiero", "Análisis", "Dashboard"]   # sin "Editar lista"
   assert not [b for b in at.button if "Guardar" in b.label]          # ni formularios ni botones para guardar
+  assert not _campo_clave(at)                                        # ya no pide la contrasena
   assert len(at.text_input) == 2                                     # solo los buscadores, ningun campo para escribir datos
   assert not at.get("download_button")                               # tampoco se puede bajar el Excel
-  assert any("Vitrina de solo lectura" in i.value for i in at.sidebar.info)
+  assert any("solo lectura" in i.value for i in at.sidebar.info)
+  assert not any("Demostración" in i.value for i in at.info)
 
 
-def test_la_vitrina_muestra_todo_incluido_el_perfil_porque_asi_se_eligio(entorno, secretos):
+def test_con_la_clave_se_ve_todo_incluido_el_perfil_porque_asi_se_eligio(entorno, secretos):
   at = _intentar(_abrir(entorno, secretos), CLAVE)
 
   etiquetas = [m.label for m in at.metric]
@@ -103,6 +146,32 @@ def test_la_vitrina_muestra_todo_incluido_el_perfil_porque_asi_se_eligio(entorno
   assert "$95" in [m.value for m in at.metric]                       # 50% de un ingreso de 190
 
 
+def test_salir_vuelve_a_la_demostracion_y_a_pedir_la_contrasena(entorno, secretos):
+  at = _intentar(_abrir(entorno, secretos), CLAVE)
+  assert ARTICULO_REAL in _texto_visible(at)
+
+  [b for b in at.sidebar.button if b.label == "Salir"][0].click()
+  at.run()
+
+  assert _es_la_demostracion(at)
+  assert len(_campo_clave(at)) == 1
+
+
+def test_la_vitrina_ignora_un_excel_local_que_este_al_lado(entorno, secretos):
+  guardar_excel(
+    {"WishList": normalizar_wishlist(pd.DataFrame({"Articulo": ["SOLO-LOCAL"], "Costo Estimado": [1.0]})),
+     "Perfil": pd.DataFrame([[1.0, 1.0, 1.0, 1.0, 1.0]], columns=COLUMNAS_PERFIL)},
+    entorno / "TablaWishList.xlsx",
+  )
+
+  bloqueada = _abrir(entorno, secretos)
+  abierta = _intentar(_abrir(entorno, secretos), CLAVE)
+
+  assert "SOLO-LOCAL" not in _texto_visible(bloqueada) and _es_la_demostracion(bloqueada)
+  assert "SOLO-LOCAL" not in _texto_visible(abierta) and ARTICULO_REAL in _texto_visible(abierta)
+
+
+# ---------- intentos limitados ----------
 def test_con_demasiados_fallos_se_bloquea_aunque_despues_se_ponga_la_clave_correcta(entorno, secretos):
   at = _abrir(entorno, secretos)
   for _ in range(vitrina.LIMITADOR.max_fallos):
@@ -111,7 +180,7 @@ def test_con_demasiados_fallos_se_bloquea_aunque_despues_se_ponga_la_clave_corre
   at = _intentar(at, CLAVE)
 
   assert any("Demasiados intentos" in e.value for e in at.error)
-  assert len(at.dataframe) == 0
+  assert _es_la_demostracion(at)
 
 
 def test_el_bloqueo_vale_para_todas_las_sesiones(entorno, secretos):
@@ -122,37 +191,29 @@ def test_el_bloqueo_vale_para_todas_las_sesiones(entorno, secretos):
   at2 = _intentar(_abrir(entorno, secretos), CLAVE)       # otra sesion distinta, clave correcta
 
   assert any("Demasiados intentos" in e.value for e in at2.error)
+  assert _es_la_demostracion(at2)
 
 
-def test_configuracion_incompleta_se_detiene_sin_pedir_nada_ni_mostrar_datos(entorno, secretos):
+# ---------- configuracion rota: nunca datos reales, siempre demostracion ----------
+def test_configuracion_incompleta_cae_en_la_demostracion_y_avisa_sin_pedir_clave(entorno, secretos):
   incompletos = {k: v for k, v in secretos.items() if k != "VITRINA_HASH"}
 
   at = _abrir(entorno, incompletos)
 
-  assert any("VITRINA_HASH" in e.value for e in at.error)
-  assert len(at.text_input) == 0 and len(at.dataframe) == 0
+  assert not at.exception
+  assert any("VITRINA_HASH" in w.value for w in at.warning)
+  assert not _campo_clave(at)
+  assert _es_la_demostracion(at)
 
 
-def test_la_vitrina_ignora_un_excel_local_que_este_al_lado(entorno, secretos):
-  guardar_excel(
-    {"WishList": normalizar_wishlist(pd.DataFrame({"Articulo": ["SOLO-LOCAL"], "Costo Estimado": [1.0]})),
-     "Perfil": pd.DataFrame([[1.0, 1.0, 1.0, 1.0, 1.0]], columns=COLUMNAS_PERFIL)},
-    entorno / "TablaWishList.xlsx",
-  )
+def test_datos_corruptos_dan_un_error_claro_y_se_queda_en_la_demostracion(entorno, secretos):
+  rotos = {**secretos, "VITRINA_EXCEL_B64": "esto-no-es-base64!!"}
 
-  at = _intentar(_abrir(entorno, secretos), CLAVE)
+  at = _intentar(_abrir(entorno, rotos), CLAVE)
 
-  assert "SOLO-LOCAL" not in _texto_visible(at) and ARTICULO_REAL in _texto_visible(at)
-
-
-def test_salir_vuelve_a_pedir_la_contrasena(entorno, secretos):
-  at = _intentar(_abrir(entorno, secretos), CLAVE)
-  assert len(at.dataframe) > 0
-
-  [b for b in at.sidebar.button if b.label == "Salir"][0].click()
-  at.run()
-
-  assert len(at.dataframe) == 0 and at.text_input[0].label == "Contraseña"
+  assert not at.exception
+  assert any("No pude leer los datos" in e.value for e in at.error)
+  assert _es_la_demostracion(at)
 
 
 def test_el_texto_que_genera_preparar_vitrina_funciona_en_la_app_de_punta_a_punta(entorno):
@@ -165,14 +226,5 @@ def test_el_texto_que_genera_preparar_vitrina_funciona_en_la_app_de_punta_a_punt
   incorrecta = _intentar(_abrir(entorno, secretos_generados), "otra-clave-larga-99")
   correcta = _intentar(_abrir(entorno, secretos_generados), CLAVE)
 
-  assert len(incorrecta.dataframe) == 0
+  assert _es_la_demostracion(incorrecta)
   assert ARTICULO_REAL in _texto_visible(correcta)
-
-
-def test_datos_corruptos_dan_un_error_claro_sin_mostrar_nada(entorno, secretos):
-  rotos = {**secretos, "VITRINA_EXCEL_B64": "esto-no-es-base64!!"}
-
-  at = _intentar(_abrir(entorno, rotos), CLAVE)
-
-  assert any("No pude leer los datos" in e.value for e in at.error)
-  assert len(at.dataframe) == 0
