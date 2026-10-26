@@ -52,6 +52,39 @@ def test_con_clave_corta_no_crea_nada(excel, tmp_path):
   assert not salida.exists()
 
 
+def test_probar_clave_dice_si_coincide_con_el_archivo_generado(excel, tmp_path):
+  salida = tmp_path / "salida.toml"
+  preparar_vitrina.crear_archivo_secretos(excel, salida, CLAVE)
+
+  assert preparar_vitrina.probar_clave(salida, CLAVE) is True
+  assert preparar_vitrina.probar_clave(salida, "otra-clave-larga-99") is False
+  assert preparar_vitrina.probar_clave(salida, CLAVE + "\x16") is False
+
+
+def test_describir_clave_avisa_de_caracteres_invisibles_sin_mostrar_la_clave():
+  limpia = preparar_vitrina.describir_clave(CLAVE)
+  sucia = preparar_vitrina.describir_clave("abc\x16def-ghi-jkl")
+
+  assert str(len(CLAVE)) in limpia and "invisible" not in limpia
+  assert "invisible" in sucia
+  assert CLAVE not in limpia and "abc" not in sucia
+
+
+def test_con_la_opcion_visible_la_clave_se_pide_con_input(monkeypatch):
+  respuestas = iter([CLAVE, CLAVE])
+  monkeypatch.setattr("builtins.input", lambda _mensaje: next(respuestas))
+
+  assert preparar_vitrina.pedir_clave(visible=True) == CLAVE
+
+
+def test_una_clave_con_caracteres_invisibles_no_se_acepta_al_pedirla(monkeypatch):
+  respuestas = iter(["una-clave\x16-larga-123"] * 2)
+  monkeypatch.setattr(preparar_vitrina.getpass, "getpass", lambda _mensaje: next(respuestas))
+
+  with pytest.raises(SystemExit):
+    preparar_vitrina.pedir_clave()
+
+
 def test_la_clave_se_pide_dos_veces_y_debe_coincidir(monkeypatch):
   respuestas = iter([CLAVE, CLAVE])
   monkeypatch.setattr(preparar_vitrina.getpass, "getpass", lambda _mensaje: next(respuestas))

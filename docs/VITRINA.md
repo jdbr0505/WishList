@@ -64,6 +64,11 @@ Las pruebas (`test_vitrina.py`, `test_vitrina_app.py`, `test_preparar_vitrina.py
 
 ## Si algo falla
 
+- **"Contraseña incorrecta (recibí N caracteres)" y estás seguro de la clave:**
+  1. Compara N con el largo real de tu contraseña. Si N es mayor o menor, se coló o faltó algo (un espacio al final, el autocompletado del navegador, un pegado raro). Escríbela a mano, sin pegar.
+  2. Si N es correcto, probablemente la clave que usaste al crear el archivo no es la que crees (o un carácter invisible entró al escribirla en la terminal; un `Ctrl+V` en una terminal de Windows lo hace). Genera de nuevo con `python preparar_vitrina.py --visible` (la clave se ve al escribirla) y pega los secretos otra vez. El script avisa cuántos caracteres tiene tu clave: ese número debe coincidir con el «recibí N» de la app.
+  3. Antes de pegar los secretos, puedes comprobar la clave contra el archivo con `python preparar_vitrina.py --probar`. Si ahí coincide pero la app dice que no, el problema son los secretos pegados (revisa que sea el archivo más reciente y completo).
+- **"Demasiados intentos fallidos":** 10 errores en 10 minutos bloquean el acceso, incluso con la clave correcta. Espera 10 minutos sin intentar nada y prueba una sola vez, bien escrita.
 - **Sale siempre la demostración y no aparece el recuadro de contraseña:** los secretos no se aplicaron. Revisa que esté `WISHLIST_MODO = "vitrina"` y que **no** esté `WISHLIST_SOLO_DEMO`.
 - **Aviso "La vitrina no está configurada del todo (falta: …)":** faltan secretos. Pega de nuevo el contenido completo del archivo.
 - **"No pude leer los datos de la vitrina":** el secreto `VITRINA_EXCEL_B64` quedó cortado o con comillas rotas. Vuelve a generar y pegar.

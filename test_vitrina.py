@@ -30,6 +30,21 @@ def test_la_huella_no_contiene_la_contrasena_y_cambia_en_cada_generacion():
   assert verificar_clave(CLAVE, sal2, huella2)
 
 
+def test_una_clave_con_caracteres_invisibles_se_rechaza():
+  # un Ctrl+V en una terminal de Windows puede colar un caracter de control sin que se vea
+  with pytest.raises(ValueError, match="invisibles"):
+    generar_clave_hash("una-clave\x16-larga-123")
+
+
+def test_los_acentos_valen_igual_escritos_de_cualquier_forma():
+  compuesta = "contraseña-fácil-123"                        # é como un solo caracter
+  descompuesta = "contraseña-fácil-123"         # n + tilde y a + tilde por separado
+  sal, huella = generar_clave_hash(compuesta)
+
+  assert compuesta != descompuesta
+  assert verificar_clave(descompuesta, sal, huella) is True
+
+
 def test_una_clave_corta_se_rechaza():
   with pytest.raises(ValueError, match="al menos"):
     generar_clave_hash("corta")

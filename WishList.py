@@ -129,7 +129,8 @@ def pedir_contrasena_vitrina():
     return True
   vitrina.LIMITADOR.registrar_fallo(ahora)
   time.sleep(vitrina.PAUSA_TRAS_FALLO)
-  st.error("Contraseña incorrecta.")
+  # se cuentan los caracteres (no se repite la clave) para detectar espacios o pegados raros
+  st.error(f"Contraseña incorrecta (recibí {len(clave)} caracteres).")
   return False
 
 

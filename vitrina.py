@@ -15,6 +15,7 @@ import hmac
 import secrets
 import threading
 import time
+import unicodedata
 from io import BytesIO
 
 import pandas as pd
@@ -27,12 +28,23 @@ PAUSA_TRAS_FALLO = 1.0          # segundos de espera tras una clave incorrecta (
 _SCRYPT = {"n": 2 ** 14, "r": 8, "p": 1, "dklen": 32}
 
 
+def tiene_caracteres_invisibles(clave: str) -> bool:
+  """True si la clave trae caracteres de control o de formato (ej. un Ctrl+V colado en la terminal)."""
+  return any(unicodedata.category(caracter) in ("Cc", "Cf") for caracter in clave)
+
+
 def _huella(clave: str, sal: bytes) -> bytes:
-  return hashlib.scrypt(clave.encode("utf-8"), salt=sal, **_SCRYPT)
+  # NFKC: "é" escrita como un caracter o como e + tilde da la misma huella (depende del teclado y del sistema)
+  return hashlib.scrypt(unicodedata.normalize("NFKC", clave).encode("utf-8"), salt=sal, **_SCRYPT)
 
 
 def generar_clave_hash(clave: str) -> tuple[str, str]:
   """Devuelve (sal, huella) en hexadecimal. Rechaza claves cortas: la contrasena compartida es lo unico que protege los datos."""
+  if tiene_caracteres_invisibles(clave):
+    raise ValueError(
+      "La contraseña tiene caracteres invisibles (por ejemplo, de un Ctrl+V en la terminal). "
+      "Escríbela a mano o usa la opción --visible."
+    )
   if len(clave) < LONGITUD_MINIMA_CLAVE:
     raise ValueError(f"La contraseña debe tener al menos {LONGITUD_MINIMA_CLAVE} caracteres.")
   sal = secrets.token_bytes(16)

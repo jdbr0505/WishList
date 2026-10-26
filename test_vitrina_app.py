@@ -104,6 +104,15 @@ def test_una_contrasena_incorrecta_no_deja_pasar_y_sigue_la_demostracion(entorno
   assert _es_la_demostracion(at)
 
 
+def test_el_error_dice_cuantos_caracteres_llegaron_para_detectar_pegados_raros(entorno, secretos):
+  intento = "esta-clave-esta-mal"                       # 19 caracteres
+
+  at = _intentar(_abrir(entorno, secretos), intento)
+
+  assert any("incorrecta" in e.value and "19 caracteres" in e.value for e in at.error)
+  assert not any(intento in e.value for e in at.error)   # cuenta los caracteres, no repite la clave
+
+
 def test_sin_contrasena_no_se_puede_guardar_nada(entorno, secretos):
   decoy = entorno / "TablaWishList.xlsx"
   guardar_excel(
