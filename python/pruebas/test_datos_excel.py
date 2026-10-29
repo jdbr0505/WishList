@@ -4,8 +4,11 @@ import pandas as pd
 from logica.datos_excel import (
   COLUMNAS_PERFIL, COLUMNAS_WISHLIST,
   cargar_datos, guardar_excel, normalizar_perfil, normalizar_wishlist,
-  excel_en_bytes, filtrar_tabla, preparar_edicion, resumir_cambios, validar_wishlist,
+  excel_en_bytes, filtrar_tabla, guardar_excel_seguro, preparar_edicion, resumir_cambios, validar_wishlist,
 )
+from logica import datos_excel
+
+import pytest
 
 
 def _wishlist_antigua():
@@ -224,3 +227,101 @@ def test_hoja_sin_filas_queda_sin_tabla(tmp_path):
 
   libro = openpyxl.load_workbook(ruta)
   assert dict(libro["Perfil"].tables.items()) == {}
+
+
+# ---------- guardado seguro: el original solo se reemplaza si todo salio bien ----------
+def _hojas_de_prueba():
+  perfil = pd.DataFrame([[1000.0, 400.0, 100.0, 500.0, 3.0]], columns=COLUMNAS_PERFIL)
+  return {"WishList": normalizar_wishlist(_wishlist_antigua()), "Perfil": perfil}
+
+
+def _original(tmp_path):
+  ruta = tmp_path / "TablaWishList.xlsx"
+  guardar_excel({"WishList": _lista_normalizada(), "Perfil": pd.DataFrame(columns=COLUMNAS_PERFIL)}, ruta)
+  return ruta
+
+
+def _sin_temporales(tmp_path):
+  return sorted(p.name for p in tmp_path.iterdir()) == ["TablaWishList.xlsx"]
+
+
+def test_guardado_seguro_escribe_el_libro_completo_y_no_deja_temporales(tmp_path):
+  ruta = _original(tmp_path)
+
+  guardar_excel_seguro(_hojas_de_prueba(), ruta)
+
+  assert cargar_datos(ruta)["Perfil"]["Ingreso Neto Mensual"].iloc[0] == 1000.0
+  assert len(cargar_datos(ruta)["WishList"]) == 3
+  assert _sin_temporales(tmp_path)
+
+
+def test_si_falla_al_armar_el_libro_el_original_queda_intacto(tmp_path):
+  ruta = _original(tmp_path)
+  antes = ruta.read_bytes()
+
+  with pytest.raises((AttributeError, IndexError)):      # openpyxl tapa el primer error con otro al cerrar
+    guardar_excel_seguro({"WishList": "esto no es una tabla"}, ruta)
+
+  assert ruta.read_bytes() == antes and _sin_temporales(tmp_path)
+
+
+def test_si_el_libro_armado_no_se_puede_leer_de_vuelta_el_original_queda_intacto(tmp_path, monkeypatch):
+  ruta = _original(tmp_path)
+  antes = ruta.read_bytes()
+  monkeypatch.setattr(datos_excel, "excel_en_bytes", lambda hojas: b"basura que no es un excel")
+
+  with pytest.raises(ValueError, match="no se reemplazo"):
+    guardar_excel_seguro(_hojas_de_prueba(), ruta)
+
+  assert ruta.read_bytes() == antes and _sin_temporales(tmp_path)
+
+
+def test_si_el_libro_armado_perdio_filas_el_original_queda_intacto(tmp_path, monkeypatch):
+  ruta = _original(tmp_path)
+  antes = ruta.read_bytes()
+  incompleto = excel_en_bytes({"WishList": _hojas_de_prueba()["WishList"].iloc[:1], "Perfil": _hojas_de_prueba()["Perfil"]})
+  monkeypatch.setattr(datos_excel, "excel_en_bytes", lambda hojas: incompleto)
+
+  with pytest.raises(ValueError, match="no se reemplazo"):
+    guardar_excel_seguro(_hojas_de_prueba(), ruta)
+
+  assert ruta.read_bytes() == antes and _sin_temporales(tmp_path)
+
+
+def test_si_se_corta_la_escritura_del_temporal_el_original_queda_intacto(tmp_path, monkeypatch):
+  ruta = _original(tmp_path)
+  antes = ruta.read_bytes()
+
+  def escritura_cortada(temporal, contenido):
+    temporal.write_bytes(contenido[:100])          # medio archivo, como si se fuera la luz
+    raise OSError("disco lleno")
+
+  monkeypatch.setattr(datos_excel, "_escribir_temporal", escritura_cortada)
+
+  with pytest.raises(OSError):
+    guardar_excel_seguro(_hojas_de_prueba(), ruta)
+
+  assert ruta.read_bytes() == antes and _sin_temporales(tmp_path)
+
+
+def test_si_el_excel_esta_abierto_da_permission_error_y_el_original_queda_intacto(tmp_path, monkeypatch):
+  ruta = _original(tmp_path)
+  antes = ruta.read_bytes()
+
+  def reemplazo_bloqueado(origen, destino):
+    raise PermissionError("el archivo esta abierto en Excel")
+
+  monkeypatch.setattr(datos_excel.os, "replace", reemplazo_bloqueado)
+
+  with pytest.raises(PermissionError):
+    guardar_excel_seguro(_hojas_de_prueba(), ruta)
+
+  assert ruta.read_bytes() == antes and _sin_temporales(tmp_path)
+
+
+def test_guardado_seguro_crea_el_archivo_si_todavia_no_existe(tmp_path):
+  ruta = tmp_path / "nuevo.xlsx"
+
+  guardar_excel_seguro(_hojas_de_prueba(), ruta)
+
+  assert ruta.exists() and len(cargar_datos(ruta)["WishList"]) == 3

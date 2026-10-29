@@ -129,7 +129,7 @@ Verificación:
 - [x] Botón de descarga en la barra lateral que genera el Excel en memoria (`excel_en_bytes`, con `BytesIO`) sin leer el disco; en modo ejemplo descarga el libro de ejemplo.
 - [ ] Estado de sesión (`st.session_state`) solo donde haga falta; anotar por qué.
 - [ ] Revisar `@st.cache_data`: ¿conviene aquí? (el archivo cambia; entender cuándo se invalida).
-- [ ] Guardado más seguro: escribir a un archivo temporal y reemplazar el original solo si todo salió bien (hoy un fallo a mitad puede dejar el archivo vacío).
+- [x] Guardado más seguro (2026-10-29): `guardar_excel_seguro` arma el libro en memoria, lo lee de vuelta y comprueba hojas y filas, lo escribe en un temporal y lo cambia por el original en un solo paso (`os.replace`). Si algo falla, el original queda intacto y el temporal se borra; con el Excel abierto da el mismo error claro de siempre. 7 pruebas nuevas (incluye un sabotaje: con escritura directa, 5 fallan).
 
 ## Fase 4 — Dashboard dentro de la app
 

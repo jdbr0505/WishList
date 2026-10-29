@@ -21,3 +21,6 @@ vitrina_secretos.toml
 *service_account*.json
 client_secret*.json
 credenciales*.json
+
+# temporal del guardado seguro (se borra solo; queda si se corta la luz justo al guardar)
+*.guardando.tmp

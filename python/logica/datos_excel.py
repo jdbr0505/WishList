@@ -2,7 +2,9 @@
 
 Este modulo no usa Streamlit: asi se puede probar con pytest sin abrir la app.
 """
+import os
 from io import BytesIO
+from pathlib import Path
 
 import pandas as pd
 from openpyxl.utils import get_column_letter
@@ -251,3 +253,43 @@ def guardar_excel(hojas, ruta):
       # nombre unico por hoja y sin espacios: TablaWishList, TablaPerfil
       nombre_tabla = f"Tabla{nombre_hoja.replace(' ', '')}"
       agregar_tabla(hoja, datos, nombre_tabla)
+
+
+def _verificar_libro(contenido, hojas):
+  """Lee de vuelta el libro armado y comprueba que tiene las mismas hojas y filas que se pidieron."""
+  try:
+    leido = pd.read_excel(BytesIO(contenido), sheet_name=None)
+  except Exception as error:
+    raise ValueError(f"El libro armado no se puede leer de vuelta ({error}): no se reemplazo el archivo.") from error
+  esperado = {nombre: len(datos) for nombre, datos in hojas.items()}
+  obtenido = {nombre: len(datos) for nombre, datos in leido.items()}
+  if esperado != obtenido:
+    raise ValueError(f"El libro armado no coincide (esperado {esperado}, obtenido {obtenido}): no se reemplazo el archivo.")
+
+
+def _escribir_temporal(temporal, contenido):
+  """Escribe los bytes y los fuerza al disco antes de seguir."""
+  with open(temporal, "wb") as archivo:
+    archivo.write(contenido)
+    archivo.flush()
+    os.fsync(archivo.fileno())
+
+
+def guardar_excel_seguro(hojas, ruta):
+  """Como guardar_excel, pero el archivo original solo se reemplaza si todo salio bien.
+
+  1) arma el libro completo en memoria, 2) lo lee de vuelta y comprueba hojas y filas,
+  3) lo escribe en un archivo temporal de la misma carpeta y 4) lo cambia por el original en un solo
+  paso (os.replace). Si algo falla en cualquier punto, el original queda intacto y el temporal se borra.
+  Si el Excel esta abierto, el reemplazo da PermissionError.
+  """
+  ruta = Path(ruta)
+  contenido = excel_en_bytes(hojas)
+  _verificar_libro(contenido, hojas)
+
+  temporal = ruta.with_name(f"{ruta.name}.guardando.tmp")
+  try:
+    _escribir_temporal(temporal, contenido)
+    os.replace(temporal, ruta)
+  finally:
+    temporal.unlink(missing_ok=True)

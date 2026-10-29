@@ -13,7 +13,7 @@ from logica import vitrina
 from logica.acceso import MODO_DEMO, MODO_VITRINA, diagnosticar_archivo_secretos, elegir_modo
 from logica.datos_excel import (
   COLUMNAS_DINERO, COLUMNAS_PERFIL, ESTADOS, FRECUENCIAS, MONEDA, TIPOS, TIPOS_VALIDOS,
-  cargar_datos, excel_en_bytes, filtrar_tabla, guardar_excel, preparar_edicion,
+  cargar_datos, excel_en_bytes, filtrar_tabla, guardar_excel_seguro, preparar_edicion,
 )
 from logica.datos_demo import hojas_demo
 from dashboards.graficos import (
@@ -115,7 +115,7 @@ def guardar(hojas_a_guardar):
     return False
   try:
     # la hoja Analisis se recalcula en cada guardado para que Excel y Power BI vean lo mismo que la app
-    guardar_excel(agregar_analisis(hojas_a_guardar), archivo)
+    guardar_excel_seguro(agregar_analisis(hojas_a_guardar), archivo)
   except PermissionError:
     st.error("El Excel está abierto o OneDrive lo bloquea. Ciérralo y vuelve a guardar.")
     return False
